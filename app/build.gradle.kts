@@ -1,0 +1,43 @@
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
+}
+
+android {
+    namespace = "com.blustream.app"
+    compileSdk = 35
+
+    defaultConfig {
+        applicationId = "com.blustream.app"
+        minSdk = 26
+        targetSdk = 35
+        versionCode = 6
+        versionName = "0.5.0-alpha"
+    }
+
+    buildFeatures { compose = true }
+
+    packaging {
+        resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
+    }
+}
+
+dependencies {
+    implementation(platform("androidx.compose:compose-bom:2025.01.00"))
+    implementation("androidx.activity:activity-compose:1.10.0")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    implementation("androidx.media3:media3-exoplayer:1.5.1")
+    implementation("androidx.media3:media3-ui:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1")
+
+    val jlibtorrentVersion = "2.0.12.9"
+    implementation("com.frostwire:jlibtorrent:$jlibtorrentVersion")
+    implementation("com.frostwire:jlibtorrent-android-arm:$jlibtorrentVersion")
+    implementation("com.frostwire:jlibtorrent-android-arm64:$jlibtorrentVersion")
+    implementation("com.frostwire:jlibtorrent-android-x86:$jlibtorrentVersion")
+    implementation("com.frostwire:jlibtorrent-android-x86_64:$jlibtorrentVersion")
+}
