@@ -1,0 +1,61 @@
+name: Build BluStream Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android 35 SDK
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Set up Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Rebuild BluStream source tree
+        shell: bash
+        run: |
+          cat ci/source.part00 ci/source.part01 ci/source.part02 ci/source.part03 ci/source.part04 ci/source.part05 > /tmp/blustream-source.b64
+          base64 --decode /tmp/blustream-source.b64 > /tmp/blustream-source.zip
+          unzip -q /tmp/blustream-source.zip -d "$GITHUB_WORKSPACE/build-src"
+          test -f "$GITHUB_WORKSPACE/build-src/BluStream-ci/settings.gradle.kts"
+
+      - name: Build debug APK
+        working-directory: build-src/BluStream-ci
+        run: gradle --no-daemon --stacktrace :app:assembleDebug
+
+      - name: Collect APK
+        run: |
+          mkdir -p release
+          cp build-src/BluStream-ci/app/build/outputs/apk/debug/app-debug.apk release/BluStream-0.5.0-alpha-debug.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BluStream-0.5.0-alpha-APK
+          path: release/BluStream-0.5.0-alpha-debug.apk
+          if-no-files-found: error
