@@ -36,22 +36,13 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Rebuild BluStream source tree
-        shell: bash
-        run: |
-          cat ci/source.part00 ci/source.part01 ci/source.part02 ci/source.part03 ci/source.part04 ci/source.part05 > /tmp/blustream-source.b64
-          base64 --decode /tmp/blustream-source.b64 > /tmp/blustream-source.zip
-          unzip -q /tmp/blustream-source.zip -d "$GITHUB_WORKSPACE/build-src"
-          test -f "$GITHUB_WORKSPACE/build-src/BluStream-ci/settings.gradle.kts"
-
       - name: Build debug APK
-        working-directory: build-src/BluStream-ci
         run: gradle --no-daemon --stacktrace :app:assembleDebug
 
       - name: Collect APK
         run: |
           mkdir -p release
-          cp build-src/BluStream-ci/app/build/outputs/apk/debug/app-debug.apk release/BluStream-0.5.0-alpha-debug.apk
+          cp app/build/outputs/apk/debug/app-debug.apk release/BluStream-0.5.0-alpha-debug.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
