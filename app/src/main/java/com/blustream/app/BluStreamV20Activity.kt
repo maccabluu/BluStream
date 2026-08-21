@@ -33,6 +33,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -97,6 +98,13 @@ fun BluStreamV20App() {
         }
     }
 
+    LaunchedEffect(message) {
+        if (message != null) {
+            delay(10_000)
+            message = null
+        }
+    }
+
     MaterialTheme(colorScheme = darkColorScheme(primary = Color(0xFF159CFF), background = Color(0xFF020C16), surface = Color(0xFF071827))) {
         when {
             showPicker || active == null -> V20ProfilePicker(profiles, onSelect = {
@@ -109,14 +117,23 @@ fun BluStreamV20App() {
                 screen = V20Screen.PROFILES
                 showPicker = false
             })
+
             playingUrl != null -> V20Player(playingTitle, playingUrl!!) { playingUrl = null }
-            selected != null -> V20Details(selected!!, active!!, {
-                selected = null
-                screen = V20Screen.HOME
-            }, { title, url ->
-                playingTitle = title
-                playingUrl = url
-            }, { message = it })
+
+            selected != null -> V20Details(
+                media = selected!!,
+                profile = active!!,
+                onBack = {
+                    selected = null
+                    screen = V20Screen.HOME
+                },
+                onPlay = { title, url ->
+                    playingTitle = title
+                    playingUrl = url
+                },
+                onMessage = { message = it }
+            )
+
             else -> V20Shell(active!!, screen, { screen = it }, { showPicker = true }) {
                 when (screen) {
                     V20Screen.HOME -> V20Home(active!!, { selected = it }, { screen = it })
@@ -130,7 +147,11 @@ fun BluStreamV20App() {
                             BluSourceKind.TORRENT -> scope.launch {
                                 message = "Connecting to P2P peers…"
                                 runCatching { P2pEngine.prepare(context.applicationContext, source) }
-                                    .onSuccess { prepared -> playingTitle = source.name.ifBlank { prepared.title }; playingUrl = prepared.url; message = null }
+                                    .onSuccess { prepared ->
+                                        playingTitle = source.name.ifBlank { prepared.title }
+                                        playingUrl = prepared.url
+                                        message = null
+                                    }
                                     .onFailure { message = it.message ?: "P2P playback failed" }
                             }
                             BluSourceKind.EXTERNAL, BluSourceKind.YOUTUBE -> source.playableTarget?.let {
@@ -149,7 +170,10 @@ fun BluStreamV20App() {
                 }
             }
         }
-        message?.let { Snackbar(Modifier.padding(16.dp)) { Text(it) } }
+
+        message?.let { current ->
+            Snackbar(Modifier.padding(16.dp)) { Text(current) }
+        }
     }
 }
 
@@ -164,13 +188,8 @@ private fun V20Avatar(token: String, kids: Boolean, size: Int = 92) {
             val eyeR = this.size.width * 0.055f
             drawCircle(Color(0xFF14202A), eyeR, center = androidx.compose.ui.geometry.Offset(this.size.width * 0.35f, eyeY))
             drawCircle(Color(0xFF14202A), eyeR, center = androidx.compose.ui.geometry.Offset(this.size.width * 0.65f, eyeY))
-            when (index) {
-                2 -> drawArc(Color(0xFF14202A), 15f, 150f, false, topLeft = androidx.compose.ui.geometry.Offset(this.size.width * 0.25f, this.size.height * 0.48f), size = androidx.compose.ui.geometry.Size(this.size.width * 0.5f, this.size.height * 0.28f), style = Stroke(4f))
-                3 -> {
-                    drawRect(Color(0xFF14202A), topLeft = androidx.compose.ui.geometry.Offset(this.size.width * 0.18f, eyeY - this.size.height * 0.1f), size = androidx.compose.ui.geometry.Size(this.size.width * 0.64f, this.size.height * 0.16f))
-                    drawCircle(Color(0xFF7FFFD4), eyeR, center = androidx.compose.ui.geometry.Offset(this.size.width * 0.35f, eyeY))
-                    drawCircle(Color(0xFF7FFFD4), eyeR, center = androidx.compose.ui.geometry.Offset(this.size.width * 0.65f, eyeY))
-                }
+            if (index == 3) {
+                drawRect(Color(0xFF14202A), topLeft = androidx.compose.ui.geometry.Offset(this.size.width * 0.18f, eyeY - this.size.height * 0.1f), size = androidx.compose.ui.geometry.Size(this.size.width * 0.64f, this.size.height * 0.16f))
             }
             drawArc(Color(0xFF14202A), 15f, 150f, false, topLeft = androidx.compose.ui.geometry.Offset(this.size.width * 0.28f, this.size.height * 0.52f), size = androidx.compose.ui.geometry.Size(this.size.width * 0.44f, this.size.height * 0.24f), style = Stroke(5f))
         }
@@ -179,7 +198,11 @@ private fun V20Avatar(token: String, kids: Boolean, size: Int = 92) {
 
 @Composable
 private fun V20ProfilePicker(profiles: List<V20Profile>, onSelect: (V20Profile) -> Unit, onManage: () -> Unit) {
-    Column(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF020912), Color(0xFF06213A)))).padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+    Column(
+        Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF020912), Color(0xFF06213A)))).padding(28.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
         Text("BLUSTREAM", color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(12.dp))
         Text("Who's watching?", color = Color(0xFFBCD2E5), fontSize = 22.sp)
@@ -206,14 +229,32 @@ private fun V20Shell(profile: V20Profile, screen: V20Screen, onScreen: (V20Scree
     ModalNavigationDrawer(drawerState = drawer, drawerContent = {
         ModalDrawerSheet(drawerContainerColor = Color(0xFF071827)) {
             Spacer(Modifier.height(18.dp))
-            Text("BLUSTREAM 2.3", Modifier.padding(18.dp), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-            listOf(V20Screen.HOME to "Home", V20Screen.MOVIES to "Movies", V20Screen.SHOWS to "Shows", V20Screen.SEARCH to "Search", V20Screen.MY_STUFF to "My Stuff", V20Screen.ADDONS to "Add-ons", V20Screen.PROFILES to "Profiles", V20Screen.SETTINGS to "Settings").forEach { (target, label) ->
-                NavigationDrawerItem(label = { Text(label) }, selected = screen == target, onClick = { onScreen(target); scope.launch { drawer.close() } }, modifier = Modifier.padding(horizontal = 10.dp))
+            Text("BLUSTREAM 2.4", Modifier.padding(18.dp), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            listOf(
+                V20Screen.HOME to "Home",
+                V20Screen.MOVIES to "Movies",
+                V20Screen.SHOWS to "Shows",
+                V20Screen.SEARCH to "Search",
+                V20Screen.MY_STUFF to "My Stuff",
+                V20Screen.ADDONS to "Add-ons",
+                V20Screen.PROFILES to "Profiles",
+                V20Screen.SETTINGS to "Settings"
+            ).forEach { (target, label) ->
+                NavigationDrawerItem(
+                    label = { Text(label) },
+                    selected = screen == target,
+                    onClick = { onScreen(target); scope.launch { drawer.close() } },
+                    modifier = Modifier.padding(horizontal = 10.dp)
+                )
             }
         }
     }) {
         Column(Modifier.fillMaxSize().background(Color(0xFF020C16))) {
-            Row(Modifier.fillMaxWidth().height(72.dp).padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(
+                Modifier.fillMaxWidth().height(72.dp).padding(horizontal = 18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Text("☰", color = Color.White, fontSize = 32.sp, modifier = Modifier.clickable { scope.launch { drawer.open() } })
                 Text("BLUSTREAM", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 Box(Modifier.clickable(onClick = onProfile)) { V20Avatar(profile.avatar, profile.kids, 42) }
@@ -261,14 +302,18 @@ private fun V20Rail(title: String, mediaItems: List<RealMedia>, onSeeAll: () -> 
             Text("See All", color = Color(0xFF159CFF), modifier = Modifier.clickable(onClick = onSeeAll))
         }
         Spacer(Modifier.height(10.dp))
-        LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(mediaItems) { V20Poster(it, onSelect) } }
+        LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(mediaItems) { V20Poster(it, onSelect) }
+        }
     }
 }
 
 @Composable
 private fun V20Poster(media: RealMedia, onSelect: (RealMedia) -> Unit) {
     Column(Modifier.width(150.dp).clickable { onSelect(media) }) {
-        Card(shape = RoundedCornerShape(12.dp)) { AsyncImage(media.poster, media.name, Modifier.fillMaxWidth().height(220.dp), contentScale = ContentScale.Crop) }
+        Card(shape = RoundedCornerShape(12.dp)) {
+            AsyncImage(media.poster, media.name, Modifier.fillMaxWidth().height(220.dp), contentScale = ContentScale.Crop)
+        }
         Spacer(Modifier.height(6.dp))
         Text(media.name, color = Color.White, maxLines = 1, fontWeight = FontWeight.SemiBold)
         Text(media.releaseInfo, color = Color(0xFF93A9BD), fontSize = 12.sp)
@@ -279,7 +324,9 @@ private fun V20Poster(media: RealMedia, onSelect: (RealMedia) -> Unit) {
 private fun V20Catalog(title: String, profile: V20Profile, type: String, onSelect: (RealMedia) -> Unit) {
     var mediaItems by remember { mutableStateOf<List<RealMedia>>(emptyList()) }
     LaunchedEffect(profile.id, profile.kids, type) {
-        mediaItems = if (profile.kids) (RealCatalog.genre(type, "Animation") + RealCatalog.genre(type, "Family")).distinctBy { it.id }.take(60) else if (type == "series") RealCatalog.topSeries() else RealCatalog.topMovies()
+        mediaItems = if (profile.kids) {
+            (RealCatalog.genre(type, "Animation") + RealCatalog.genre(type, "Family")).distinctBy { it.id }.take(60)
+        } else if (type == "series") RealCatalog.topSeries() else RealCatalog.topMovies()
     }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Text(title, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold) }
@@ -302,7 +349,13 @@ private fun V20Search(profile: V20Profile, onSelect: (RealMedia) -> Unit) {
         Spacer(Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(query, { query = it }, Modifier.weight(1f), placeholder = { Text("Movies and shows") }, singleLine = true)
-            Button(onClick = { scope.launch { results = RealCatalog.search(query).filter { !profile.kids || it.genres.any { g -> g.equals("Animation", true) || g.equals("Family", true) } } } }) { Text("Search") }
+            Button(onClick = {
+                scope.launch {
+                    results = RealCatalog.search(query).filter {
+                        !profile.kids || it.genres.any { g -> g.equals("Animation", true) || g.equals("Family", true) }
+                    }
+                }
+            }) { Text("Search") }
         }
         Spacer(Modifier.height(14.dp))
         LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -310,7 +363,10 @@ private fun V20Search(profile: V20Profile, onSelect: (RealMedia) -> Unit) {
                 Row(Modifier.fillMaxWidth().clickable { onSelect(media) }.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     AsyncImage(media.poster, media.name, Modifier.size(72.dp, 105.dp), contentScale = ContentScale.Crop)
                     Spacer(Modifier.width(12.dp))
-                    Column { Text(media.name, color = Color.White, fontWeight = FontWeight.Bold); Text(media.releaseInfo, color = Color(0xFF93A9BD)) }
+                    Column {
+                        Text(media.name, color = Color.White, fontWeight = FontWeight.Bold)
+                        Text(media.releaseInfo, color = Color(0xFF93A9BD))
+                    }
                 }
             }
         }
@@ -347,16 +403,29 @@ private fun V20ManageProfiles(profiles: List<V20Profile>, onSave: (List<V20Profi
                         Switch(p.kids, { checked -> local = local.map { if (it.id == p.id) it.copy(kids = checked) else it } })
                     }
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        items(avatars) { avatar -> Box(Modifier.clickable { local = local.map { if (it.id == p.id) it.copy(avatar = avatar) else it } }) { V20Avatar(avatar, p.kids, 46) } }
+                        items(avatars) { avatar ->
+                            Box(Modifier.clickable { local = local.map { if (it.id == p.id) it.copy(avatar = avatar) else it } }) {
+                                V20Avatar(avatar, p.kids, 46)
+                            }
+                        }
                     }
-                    if (local.size > 1) TextButton(onClick = { local = local.filterNot { it.id == p.id } }) { Text("Remove profile") }
+                    if (local.size > 1) {
+                        TextButton(onClick = { local = local.filterNot { it.id == p.id } }) { Text("Remove profile") }
+                    }
                 }
             }
         }
-        if (local.size < 5) item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(newName, { newName = it }, Modifier.weight(1f), placeholder = { Text("New profile name") }, singleLine = true)
-                Button(onClick = { if (newName.isNotBlank()) { local = local + V20Profile(UUID.randomUUID().toString(), newName.trim(), "face${(local.size % 6) + 1}", false); newName = "" } }) { Text("Add") }
+        if (local.size < 5) {
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(newName, { newName = it }, Modifier.weight(1f), placeholder = { Text("New profile name") }, singleLine = true)
+                    Button(onClick = {
+                        if (newName.isNotBlank()) {
+                            local = local + V20Profile(UUID.randomUUID().toString(), newName.trim(), "face${(local.size % 6) + 1}", false)
+                            newName = ""
+                        }
+                    }) { Text("Add") }
+                }
             }
         }
         item { Button(onClick = { onSave(local) }, Modifier.fillMaxWidth()) { Text("Save profiles") } }
@@ -371,11 +440,20 @@ private fun V20Settings(profile: V20Profile) {
     LazyColumn(Modifier.fillMaxSize().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Text("Settings", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold) }
         item { Text("Profile: ${profile.name}", color = Color(0xFF93A9BD)) }
-        item { Row(verticalAlignment = Alignment.CenterVertically) { Text("Autoplay next episode", color = Color.White, modifier = Modifier.weight(1f)); Switch(autoplay, { autoplay = it }) } }
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Autoplay next episode", color = Color.White, modifier = Modifier.weight(1f))
+                Switch(autoplay, { autoplay = it })
+            }
+        }
         item { OutlinedTextField(language, { language = it }, label = { Text("Preferred language") }, modifier = Modifier.fillMaxWidth()) }
         item { HorizontalDivider() }
         item { Text("App", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold) }
-        item { Button(onClick = { activity?.let { UpdateManager.check(it, manual = true) } }, enabled = activity != null, modifier = Modifier.fillMaxWidth()) { Text("Check for updates") } }
+        item {
+            Button(onClick = { activity?.let { UpdateManager.check(it, manual = true) } }, enabled = activity != null, modifier = Modifier.fillMaxWidth()) {
+                Text("Check for updates")
+            }
+        }
         item { Text("BluStream checks GitHub Releases after launch. Automatic checks use a 15-minute cooldown. Update now downloads the APK in BluStream and opens Android's installer.", color = Color(0xFFBCD2E5)) }
         item { Text("Privacy", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold) }
         item { Text("No BluStream account registration. No BluStream sign-up wall. Profile data stays local in this alpha build.", color = Color(0xFFBCD2E5)) }
@@ -396,8 +474,8 @@ private fun V20Details(media: RealMedia, profile: V20Profile, onBack: () -> Unit
     LaunchedEffect(media.id, media.type) {
         details = RealCatalog.details(media.type, media.id)
         if (media.type == "series") {
-            val episodes = details?.episodes.orEmpty().filter { it.season > 0 }
-            val first = episodes.minWithOrNull(compareBy<RealEpisode> { it.season }.thenBy { it.episode })
+            val eps = details?.episodes.orEmpty().filter { it.season > 0 }
+            val first = eps.minWithOrNull(compareBy<RealEpisode> { it.season }.thenBy { it.episode })
             selectedSeason = first?.season
             selectedEpisode = first
         }
@@ -411,8 +489,14 @@ private fun V20Details(media: RealMedia, profile: V20Profile, onBack: () -> Unit
                 connectingId = source.stableKey
                 onMessage("Connecting to P2P peers…")
                 runCatching { P2pEngine.prepare(context.applicationContext, source) }
-                    .onSuccess { prepared -> connectingId = null; onPlay(playTitle, prepared.url) }
-                    .onFailure { connectingId = null; onMessage(it.message ?: "P2P playback failed") }
+                    .onSuccess { prepared ->
+                        connectingId = null
+                        onPlay(playTitle, prepared.url)
+                    }
+                    .onFailure {
+                        connectingId = null
+                        onMessage(it.message ?: "P2P playback failed")
+                    }
             }
             BluSourceKind.EXTERNAL, BluSourceKind.YOUTUBE -> source.playableTarget?.let {
                 runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) }
@@ -450,6 +534,7 @@ private fun V20Details(media: RealMedia, profile: V20Profile, onBack: () -> Unit
                 Button(onClick = onBack, modifier = Modifier.padding(16.dp)) { Text("← Home") }
             }
         }
+
         item {
             Column(Modifier.padding(horizontal = 20.dp)) {
                 Text(media.name, color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
@@ -482,7 +567,11 @@ private fun V20Details(media: RealMedia, profile: V20Profile, onBack: () -> Unit
                     Spacer(Modifier.height(12.dp))
                 }
 
-                Button(enabled = !loading && (media.type != "series" || selectedEpisode != null), onClick = { findSources() }, modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    enabled = !loading && (media.type != "series" || selectedEpisode != null),
+                    onClick = { findSources() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Text(if (loading) "Finding…" else if (media.type == "series") "Find episode sources" else "Find sources")
                 }
 
@@ -496,7 +585,9 @@ private fun V20Details(media: RealMedia, profile: V20Profile, onBack: () -> Unit
         }
 
         if (media.type == "series" && seasonEpisodes.isNotEmpty()) {
-            item { Text("Season ${selectedSeason ?: 1}", Modifier.padding(horizontal = 20.dp, vertical = 14.dp), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold) }
+            item {
+                Text("Season ${selectedSeason ?: 1}", Modifier.padding(horizontal = 20.dp, vertical = 14.dp), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            }
             items(seasonEpisodes) { episode ->
                 Card(
                     Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp).clickable {
@@ -538,7 +629,13 @@ private fun V20Details(media: RealMedia, profile: V20Profile, onBack: () -> Unit
 @Composable
 private fun V20Player(title: String, url: String, onBack: () -> Unit) {
     val context = LocalContext.current
-    val player = remember(url) { ExoPlayer.Builder(context).build().apply { setMediaItem(MediaItem.fromUri(url)); prepare(); playWhenReady = true } }
+    val player = remember(url) {
+        ExoPlayer.Builder(context).build().apply {
+            setMediaItem(MediaItem.fromUri(url))
+            prepare()
+            playWhenReady = true
+        }
+    }
     DisposableEffect(player) { onDispose { player.release() } }
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         AndroidView(factory = { PlayerView(it).apply { this.player = player; useController = true } }, modifier = Modifier.fillMaxSize())
