@@ -50,7 +50,6 @@ data class BluStreamSource(
     val rawJson: String = ""
 ) {
     val stableKey: String get() = listOf(kind.name, url, externalUrl, ytId, infoHash, fileIdx?.toString(), nzbUrl).joinToString("|")
-
     val playableTarget: String? get() = when (kind) {
         BluSourceKind.DIRECT -> url
         BluSourceKind.EXTERNAL -> externalUrl
@@ -59,7 +58,6 @@ data class BluStreamSource(
         BluSourceKind.NZB -> nzbUrl
         else -> url ?: externalUrl
     }
-
     private fun buildMagnetUri(): String? {
         url?.takeIf { it.startsWith("magnet:", true) }?.let { return it }
         val hash = infoHash?.takeIf { it.isNotBlank() } ?: return null
@@ -75,9 +73,19 @@ data class BluStreamSource(
     }
 }
 
+private fun BluStreamSource.fastRank(): Int = when (kind) {
+    BluSourceKind.DIRECT -> if (url?.startsWith("https://", true) == true) 0 else 1
+    BluSourceKind.EXTERNAL -> 2
+    BluSourceKind.YOUTUBE -> 3
+    BluSourceKind.TORRENT -> 10
+    else -> 20
+}
+
+private fun preferFastStreams(streams: List<BluStreamSource>): List<BluStreamSource> =
+    streams.distinctBy { it.stableKey }.sortedBy { it.fastRank() }
+
 internal object AddonPrefs {
     private fun key(profileId: String) = "installed_manifest_urls_${profileId.ifBlank { "default" }}"
-
     fun load(context: Context, profileId: String = "default"): Set<String> {
         val prefs = context.getSharedPreferences(ADDON_PREFS, Context.MODE_PRIVATE)
         val saved = prefs.getStringSet(key(profileId), null)?.toSet()
@@ -87,7 +95,6 @@ internal object AddonPrefs {
         if (legacy.isNotEmpty()) save(context, profileId, legacy)
         return legacy
     }
-
     fun save(context: Context, profileId: String = "default", urls: Set<String>) {
         context.getSharedPreferences(ADDON_PREFS, Context.MODE_PRIVATE).edit().putStringSet(key(profileId), urls).apply()
     }
@@ -103,14 +110,7 @@ internal object StremioAddonClient {
                 val manifest = item.optJSONObject("manifest")
                 val manifestUrl = item.optString("manifestUrl", "").trim()
                 if (manifestUrl.isBlank()) continue
-                add(
-                    BluAddon(
-                        manifest?.optString("name")?.takeIf { it.isNotBlank() } ?: item.optString("slug", "Unnamed add-on"),
-                        manifest?.optString("description", "") ?: "",
-                        manifestUrl,
-                        item.optInt("stars", 0)
-                    )
-                )
+                add(BluAddon(manifest?.optString("name")?.takeIf { it.isNotBlank() } ?: item.optString("slug", "Unnamed add-on"), manifest?.optString("description", "") ?: "", manifestUrl, item.optInt("stars", 0)))
             }
         }.distinctBy { it.manifestUrl }
     }
@@ -128,7 +128,7 @@ internal object StremioAddonClient {
         val base = manifestUrl.substringBeforeLast("/manifest.json")
         val endpoint = "$base/stream/${if (type == "series") "series" else "movie"}/${URLEncoder.encode(id.trim(), "UTF-8")}.json"
         val streams = JSONObject(getJson(endpoint)).optJSONArray("streams") ?: return@withContext emptyList()
-        buildList {
+        preferFastStreams(buildList {
             for (i in 0 until streams.length()) {
                 val s = streams.optJSONObject(i) ?: continue
                 val url = s.optString("url", "").takeIf { it.isNotBlank() }
@@ -138,11 +138,7 @@ internal object StremioAddonClient {
                 val fileIdx = if (s.has("fileIdx")) s.optInt("fileIdx") else null
                 val sourceArray = s.optJSONArray("sources")
                 val sourceHints = buildList {
-                    if (sourceArray != null) {
-                        for (j in 0 until sourceArray.length()) {
-                            sourceArray.optString(j).takeIf { it.isNotBlank() }?.let(::add)
-                        }
-                    }
+                    if (sourceArray != null) for (j in 0 until sourceArray.length()) sourceArray.optString(j).takeIf { it.isNotBlank() }?.let(::add)
                 }
                 val kind = when {
                     url?.startsWith("magnet:", true) == true || hash != null -> BluSourceKind.TORRENT
@@ -151,22 +147,9 @@ internal object StremioAddonClient {
                     yt != null -> BluSourceKind.YOUTUBE
                     else -> BluSourceKind.UNKNOWN
                 }
-                add(
-                    BluStreamSource(
-                        name = s.optString("name", "Stream ${i + 1}"),
-                        description = s.optString("description", s.optString("title", "")),
-                        kind = kind,
-                        url = url,
-                        externalUrl = external,
-                        ytId = yt,
-                        infoHash = hash,
-                        fileIdx = fileIdx,
-                        sources = sourceHints,
-                        rawJson = s.toString()
-                    )
-                )
+                add(BluStreamSource(s.optString("name", "Stream ${i + 1}"), s.optString("description", s.optString("title", "")), kind, url, external, yt, hash, fileIdx, sourceHints, rawJson = s.toString()))
             }
-        }
+        })
     }
 
     private fun getJson(address: String): String {
@@ -179,9 +162,7 @@ internal object StremioAddonClient {
             val code = c.responseCode
             if (code !in 200..299) error("Server returned HTTP $code")
             c.inputStream.bufferedReader().use { it.readText() }
-        } finally {
-            c.disconnect()
-        }
+        } finally { c.disconnect() }
     }
 }
 
@@ -190,7 +171,7 @@ suspend fun resolveInstalledAddonStreams(context: Context, profileId: String, ty
     AddonPrefs.load(context, profileId).forEach { manifest ->
         runCatching { StremioAddonClient.resolveStreams(manifest, type, id) }.getOrNull()?.let(found::addAll)
     }
-    return found.distinctBy { it.stableKey }
+    return preferFastStreams(found)
 }
 
 @Composable
@@ -208,105 +189,31 @@ fun AddonsScreen(profileId: String, profileName: String, onProfile: () -> Unit, 
     var message by remember { mutableStateOf("Browse Stremio-compatible add-ons or install a manifest URL.") }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        item {
-            Header(profileName, onProfile)
-            Text("Add-ons", color = Color.White, fontSize = 26.sp)
-            Text(message, color = Color(0xFFB8C9DC))
-        }
+        item { Header(profileName, onProfile); Text("Add-ons", color = Color.White, fontSize = 26.sp); Text(message, color = Color(0xFFB8C9DC)) }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(enabled = !loading, onClick = {
-                    scope.launch {
-                        loading = true
-                        runCatching { StremioAddonClient.loadDirectory() }
-                            .onSuccess { directory = it; message = "Loaded ${it.size} add-ons." }
-                            .onFailure { message = it.message ?: "Directory failed" }
-                        loading = false
-                    }
-                }) { Text("Browse directory") }
-                OutlinedButton(enabled = !loading && installed.isNotEmpty(), onClick = {
-                    message = "Checked ${installed.size} installed add-ons."
-                }) { Text("Refresh") }
+                Button(enabled = !loading, onClick = { scope.launch { loading = true; runCatching { StremioAddonClient.loadDirectory() }.onSuccess { directory = it; message = "Loaded ${it.size} add-ons." }.onFailure { message = it.message ?: "Directory failed" }; loading = false } }) { Text("Browse directory") }
+                OutlinedButton(enabled = !loading && installed.isNotEmpty(), onClick = { message = "Checked ${installed.size} installed add-ons." }) { Text("Refresh") }
             }
         }
         item {
             OutlinedTextField(manualUrl, { manualUrl = it.take(2048) }, Modifier.fillMaxWidth(), label = { Text("Manifest URL") })
-            Button(enabled = !loading && manualUrl.startsWith("http"), onClick = {
-                scope.launch {
-                    loading = true
-                    runCatching { StremioAddonClient.loadManifest(manualUrl.trim()) }
-                        .onSuccess { addon ->
-                            installed = installed + addon.manifestUrl
-                            AddonPrefs.save(context, profileId, installed)
-                            selectedManifest = addon.manifestUrl
-                            message = "Installed ${addon.name}."
-                        }
-                        .onFailure { message = it.message ?: "Install failed" }
-                    loading = false
-                }
-            }) { Text("Install add-on") }
+            Button(enabled = !loading && manualUrl.startsWith("http"), onClick = { scope.launch { loading = true; runCatching { StremioAddonClient.loadManifest(manualUrl.trim()) }.onSuccess { addon -> installed = installed + addon.manifestUrl; AddonPrefs.save(context, profileId, installed); selectedManifest = addon.manifestUrl; message = "Installed ${addon.name}." }.onFailure { message = it.message ?: "Install failed" }; loading = false } }) { Text("Install add-on") }
         }
         if (installed.isNotEmpty()) {
             item { Text("Installed for $profileName", color = Color.White, fontSize = 20.sp) }
-            items(installed.toList()) { url ->
-                Card(Modifier.fillMaxWidth().clickable { selectedManifest = url }.focusable()) {
-                    Column(Modifier.padding(14.dp)) {
-                        Text(url)
-                        Text("Remove", Modifier.clickable {
-                            installed = installed - url
-                            AddonPrefs.save(context, profileId, installed)
-                        }, color = Color(0xFF159CFF))
-                    }
-                }
-            }
+            items(installed.toList()) { url -> Card(Modifier.fillMaxWidth().clickable { selectedManifest = url }.focusable()) { Column(Modifier.padding(14.dp)) { Text(url); Text("Remove", Modifier.clickable { installed = installed - url; AddonPrefs.save(context, profileId, installed) }, color = Color(0xFF159CFF)) } } }
         }
         if (directory.isNotEmpty()) {
             item { Text("Directory", color = Color.White, fontSize = 20.sp) }
-            items(directory) { addon ->
-                Card(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(14.dp)) {
-                        Text(addon.name)
-                        Text(addon.description, maxLines = 2)
-                        Button(enabled = addon.manifestUrl !in installed, onClick = {
-                            scope.launch {
-                                runCatching { StremioAddonClient.loadManifest(addon.manifestUrl) }.onSuccess {
-                                    installed = installed + addon.manifestUrl
-                                    AddonPrefs.save(context, profileId, installed)
-                                    selectedManifest = addon.manifestUrl
-                                }
-                            }
-                        }) { Text(if (addon.manifestUrl in installed) "Installed" else "Install") }
-                    }
-                }
-            }
+            items(directory) { addon -> Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp)) { Text(addon.name); Text(addon.description, maxLines = 2); Button(enabled = addon.manifestUrl !in installed, onClick = { scope.launch { runCatching { StremioAddonClient.loadManifest(addon.manifestUrl) }.onSuccess { installed = installed + addon.manifestUrl; AddonPrefs.save(context, profileId, installed); selectedManifest = addon.manifestUrl } } }) { Text(if (addon.manifestUrl in installed) "Installed" else "Install") } } } }
         }
         item {
-            HorizontalDivider()
-            Text("Find streams", color = Color.White, fontSize = 20.sp)
-            Row {
-                FilterChip(contentType == "movie", { contentType = "movie" }, { Text("Movie") })
-                Spacer(Modifier.width(8.dp))
-                FilterChip(contentType == "series", { contentType = "series" }, { Text("Series") })
-            }
+            HorizontalDivider(); Text("Find streams", color = Color.White, fontSize = 20.sp)
+            Row { FilterChip(contentType == "movie", { contentType = "movie" }, { Text("Movie") }); Spacer(Modifier.width(8.dp)); FilterChip(contentType == "series", { contentType = "series" }, { Text("Series") }) }
             OutlinedTextField(mediaId, { mediaId = it }, Modifier.fillMaxWidth(), label = { Text("Media ID") })
-            Button(enabled = selectedManifest != null && mediaId.isNotBlank() && !loading, onClick = {
-                val manifest = selectedManifest ?: return@Button
-                scope.launch {
-                    loading = true
-                    runCatching { StremioAddonClient.resolveStreams(manifest, contentType, mediaId) }
-                        .onSuccess { sources = it; message = "Found ${it.size} source(s)." }
-                        .onFailure { message = it.message ?: "Lookup failed" }
-                    loading = false
-                }
-            }) { Text("Find streams") }
+            Button(enabled = selectedManifest != null && mediaId.isNotBlank() && !loading, onClick = { val manifest = selectedManifest ?: return@Button; scope.launch { loading = true; runCatching { StremioAddonClient.resolveStreams(manifest, contentType, mediaId) }.onSuccess { sources = it; message = "Found ${it.size} source(s). Fast direct streams appear first." }.onFailure { message = it.message ?: "Lookup failed" }; loading = false } }) { Text("Find streams") }
         }
-        items(sources) { source ->
-            Card(Modifier.fillMaxWidth().clickable { onPlaySource(source) }) {
-                Column(Modifier.padding(14.dp)) {
-                    Text(source.name)
-                    Text(source.kind.name)
-                }
-            }
-        }
+        items(sources) { source -> Card(Modifier.fillMaxWidth().clickable { onPlaySource(source) }) { Column(Modifier.padding(14.dp)) { Text(source.name); Text(if (source.kind == BluSourceKind.DIRECT) "FAST DIRECT" else source.kind.name) } } }
     }
 }
