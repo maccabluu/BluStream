@@ -2,7 +2,7 @@
 
 ## v0.7.0-alpha
 
-This release expands BluStream into a fuller streaming-style app with native browsing and profile features.
+This release expands BluStream into a fuller streaming-style app with native browsing, profiles and direct title-page playback.
 
 ### New Features
 
@@ -12,6 +12,10 @@ This release expands BluStream into a fuller streaming-style app with native bro
 - My Stuff saved separately for each profile
 - Series detail pages with seasons and episode lists
 - Expanded Profile Manager
+- Inline source finder on movie and show detail pages
+- Large Play button after compatible sources are found
+- Source picker with available compatible streams
+- Episode source lookup from the series detail page
 
 ### Added
 
@@ -24,6 +28,8 @@ This release expands BluStream into a fuller streaming-style app with native bro
 - Cast information on supported title detail pages
 - Runtime and genre metadata where available
 - Cinemeta metadata search and genre catalog support
+- Installed add-ons are checked directly from title pages
+- Media3 player opens directly after a source is selected
 
 ### Changed
 
@@ -32,6 +38,7 @@ This release expands BluStream into a fuller streaming-style app with native bro
 - My List is renamed My Stuff
 - Search now queries the metadata catalog instead of only filtering loaded home titles
 - Movie and show browsing use real catalog metadata and artwork
+- Find sources no longer sends the user away from the title page
 - Android version moved to 0.7 alpha
 
 ### Existing Features
