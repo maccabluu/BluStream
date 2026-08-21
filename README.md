@@ -4,7 +4,7 @@ BluStream is an Android / iOS / TV streaming app.
 
 ## Current status
 
-BluStream 0.7 Alpha is the current Android development version. Android builds are produced through GitHub Actions. The iOS project remains available for Xcode testing.
+BluStream 0.7 Alpha is the current Android development version. Android builds are produced through GitHub Actions. The Android source picker build error has been repaired and the workflow is back to the normal release pipeline. The iOS project remains available for Xcode testing.
 
 ## New in 0.7
 
