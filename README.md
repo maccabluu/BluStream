@@ -8,11 +8,16 @@ BluStream 0.6 Alpha is the current development branch. Android builds are publis
 
 ## Added in 0.6
 
-- New streaming-style BluStream interface inspired by modern TV apps
+- Cinematic BluStream home screen matching the new visual reference
+- BLUSTREAM branded top bar
+- Full-width featured hero artwork
+- Watch Now hero action
+- Continue Watching cards with artwork and progress bars
+- Trending Now poster row
+- Popular Movies poster row
+- See All links on media rails
+- Dark navy streaming interface with bright blue accents
 - Who's Watching profile screen
-- Home screen with featured content
-- Continue Watching rows
-- Trending and Popular rows
 - Discover screen
 - Search screen
 - My List screen
@@ -45,6 +50,7 @@ BluStream compares installed alpha build numbers so the same release is not offe
 
 - Minimum Android version: Android 8.0
 - AndroidX Media3 ExoPlayer playback
+- Coil image loading for cinematic artwork and poster cards
 - ARM, ARM64, x86 and x86_64 native P2P support
 - GitHub Actions APK builds
 - GitHub Releases distribution
@@ -87,4 +93,4 @@ BluStream compares installed alpha build numbers so the same release is not offe
 
 0.5 added the native P2P engine and progressive torrent playback.
 
-0.6 adds the redesigned BluStream interface, Android / iOS / TV branding and built-in GitHub update checks.
+0.6 adds the cinematic BluStream interface, Android / iOS / TV branding and built-in GitHub update checks.
