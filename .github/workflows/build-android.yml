@@ -13,7 +13,6 @@ on:
 
 permissions:
   contents: write
-  issues: write
 
 jobs:
   build:
@@ -23,30 +22,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Apply Android source hotfix
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path('app/src/main/java/com/blustream/app/BluStreamShell.kt')
-          text = path.read_text()
-
-          old_play = 'Text("▶ Play ${chosenEpisode?.let { "S${it.season} E${it.episode}" } ?: resolved.name}", fontSize = 17.sp)'
-          new_play = 'val playLabel = chosenEpisode?.let { episode -> "S${episode.season} E${episode.episode}" } ?: resolved.name\n                    Text("▶ Play $playLabel", fontSize = 17.sp)'
-          if old_play in text:
-              text = text.replace(old_play, new_play)
-
-          old_profiles = 'if (p.kids) Text("Kids", color = Color(0xFF75BEFF), fontSize = 11.sp) } } }\n        Spacer(Modifier.height(20.dp)); OutlinedButton(onClick = onManage) { Text("Manage Profiles") }'
-          new_profiles = 'if (p.kids) Text("Kids", color = Color(0xFF75BEFF), fontSize = 11.sp) } } } }\n        Spacer(Modifier.height(20.dp)); OutlinedButton(onClick = onManage) { Text("Manage Profiles") }'
-          if old_profiles in text:
-              text = text.replace(old_profiles, new_profiles, 1)
-              print('Fixed ProfilePicker brace')
-          else:
-              print('ProfilePicker brace already fixed or pattern not found')
-
-          path.write_text(text)
-          PY
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -68,44 +43,7 @@ jobs:
           gradle-version: '8.9'
 
       - name: Build debug APK
-        id: gradle_build
-        shell: bash
-        run: |
-          set +e
-          gradle --no-daemon --stacktrace :app:assembleDebug 2>&1 | tee build.log
-          STATUS=${PIPESTATUS[0]}
-          if [ "$STATUS" -ne 0 ]; then
-            {
-              echo "BluStream Android build failed on commit $GITHUB_SHA"
-              echo
-              echo '```text'
-              grep -E "(^e: | error: |Unresolved reference|Cannot access|Type mismatch|No value passed|Too many arguments|FAILURE:|What went wrong|Compilation error|Syntax error)" build.log | tail -n 180
-              echo '```'
-            } > build-error.md
-            exit "$STATUS"
-          fi
-
-      - name: Save successful Android source hotfix
-        if: success()
-        shell: bash
-        run: |
-          if ! git diff --quiet -- app/src/main/java/com/blustream/app/BluStreamShell.kt; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add app/src/main/java/com/blustream/app/BluStreamShell.kt
-            git commit -m "Fix BluStream Android build [skip ci]"
-            git push
-          fi
-
-      - name: Report build error
-        if: failure() && steps.gradle_build.outcome == 'failure'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh issue create \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "CI build error ${GITHUB_RUN_NUMBER}" \
-            --body-file build-error.md || true
+        run: gradle --no-daemon --stacktrace :app:assembleDebug
 
       - name: Collect APK
         run: |
