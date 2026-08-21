@@ -44,6 +44,7 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.5.1")
     implementation("androidx.media3:media3-ui:1.5.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1")
+    implementation("io.coil-kt:coil-compose:2.7.0")
 
     val jlibtorrentVersion = "2.0.12.9"
     implementation("com.frostwire:jlibtorrent:$jlibtorrentVersion")
