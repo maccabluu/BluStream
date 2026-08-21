@@ -24,7 +24,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Apply BlueStacks artwork compatibility fix
+      - name: Apply BluStream 2.0 alpha UI compatibility patch
         shell: bash
         run: |
           python3 - <<'PY'
@@ -51,6 +51,10 @@ jobs:
               }
           }
 
+          private fun kidSafe(items: List<RealMedia>): List<RealMedia> = items.filter { media ->
+              media.genres.any { g -> g.equals("Family", true) || g.equals("Animation", true) || g.equals("Kids", true) || g.equals("Children", true) }
+          }
+
           '''
           marker = '@Composable\nprivate fun TopBarV07'
           if 'private fun bluImageRequest' not in text and marker in text:
@@ -61,15 +65,67 @@ jobs:
               'model = item.poster': 'model = bluImageRequest(item.poster)',
               'model = resolved.background.ifBlank { resolved.poster }': 'model = bluImageRequest(resolved.background.ifBlank { resolved.poster })',
               'model = ep.thumbnail': 'model = bluImageRequest(ep.thumbnail)',
+              'var showProfiles by remember { mutableStateOf(true) }': 'var showProfiles by remember { mutableStateOf(profiles.size > 1) }',
+              'BluProfile(UUID.randomUUID().toString(), "Macca", "M", 0, false)': 'BluProfile(UUID.randomUUID().toString(), "Macca", "🙂", 0, false)',
+              'BluProfile(UUID.randomUUID().toString(), "Guest", "G", 1, false)': 'BluProfile(UUID.randomUUID().toString(), "Guest", "😎", 1, false)',
+              'BluProfile(UUID.randomUUID().toString(), "New Profile", "N", profiles.size, false)': 'BluProfile(UUID.randomUUID().toString(), "New Profile", "🙂", profiles.size, false)',
+              'AddonPrefs.load(context)': 'AddonPrefs.load(context, profile.id)',
+              'AddonsScreen(profile.name, { showProfiles = true }, { source -> playSource(source) })': 'AddonsScreen(profile.id, profile.name, { showProfiles = true }, { source -> playSource(source) })',
+              'Text("About", "BluStream 0.7 Alpha")': 'Text("About", "BluStream 2.0 Alpha")'
           }
           for old, new in replacements.items():
               text = text.replace(old, new)
+
+          old_call = 'BluPage.HOME -> RealHomeV07(profile, { scope.launch { drawer.open() } }, { showProfiles = true }, { selected = it })'
+          new_call = 'BluPage.HOME -> RealHomeV07(profile, { scope.launch { drawer.open() } }, { showProfiles = true }, { selected = it }) { type -> page = if (type == "series") BluPage.SHOWS else BluPage.MOVIES }'
+          text = text.replace(old_call, new_call)
+
+          text = text.replace(
+              'private fun RealHomeV07(profile: BluProfile, onMenu: () -> Unit, onProfile: () -> Unit, onSelect: (RealMedia) -> Unit) {',
+              'private fun RealHomeV07(profile: BluProfile, onMenu: () -> Unit, onProfile: () -> Unit, onSelect: (RealMedia) -> Unit, onSeeAll: (String) -> Unit) {'
+          )
+          text = text.replace(
+              'LaunchedEffect(profile.id) { movies = RealCatalog.topMovies(); series = RealCatalog.topSeries() }',
+              'LaunchedEffect(profile.id) { val m = RealCatalog.topMovies(); val s = RealCatalog.topSeries(); movies = if (profile.kids) kidSafe(m) else m; series = if (profile.kids) kidSafe(s) else s }'
+          )
+          text = text.replace('MediaRailV07("Popular Movies", movies, onSelect)', 'MediaRailV07(if (profile.kids) "Kids Movies" else "Popular Movies", movies, onSelect) { onSeeAll("movie") }')
+          text = text.replace('MediaRailV07("Popular Shows", series, onSelect)', 'MediaRailV07(if (profile.kids) "Kids Shows" else "Popular Shows", series, onSelect) { onSeeAll("series") }')
+          text = text.replace('MediaRailV07("More to Explore", movies.drop(8) + series.drop(8), onSelect)', 'MediaRailV07("More to Explore", movies.drop(8) + series.drop(8), onSelect) { onSeeAll("movie") }')
+          text = text.replace(
+              'private fun MediaRailV07(title: String, items: List<RealMedia>, onSelect: (RealMedia) -> Unit) {',
+              'private fun MediaRailV07(title: String, items: List<RealMedia>, onSelect: (RealMedia) -> Unit, onSeeAll: () -> Unit) {'
+          )
+          text = text.replace('Text("See All", color = Color(0xFF1597FF))', 'Text("See All", color = Color(0xFF1597FF), modifier = Modifier.clickable { onSeeAll() })')
+          text = text.replace(
+              'LaunchedEffect(type) { items = if (type == "series") RealCatalog.topSeries() else RealCatalog.topMovies() }',
+              'LaunchedEffect(type, profile.id) { val loaded = if (type == "series") RealCatalog.topSeries() else RealCatalog.topMovies(); items = if (profile.kids) kidSafe(loaded) else loaded }'
+          )
+          text = text.replace(
+              'results = RealCatalog.search(query); SearchHistoryStore.add(context, profile.id, query);',
+              'val found = RealCatalog.search(query); results = if (profile.kids) kidSafe(found) else found; SearchHistoryStore.add(context, profile.id, query);'
+          )
+          text = text.replace(
+              'val genres = listOf("Action", "Adventure", "Animation", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Thriller")',
+              'val genres = if (profile.kids) listOf("Animation", "Family", "Adventure", "Comedy", "Fantasy") else listOf("Action", "Adventure", "Animation", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Thriller")'
+          )
+          text = text.replace(
+              'LaunchedEffect(selectedGenre, type) { selectedGenre?.let { items = RealCatalog.genre(type, it) } }',
+              'LaunchedEffect(selectedGenre, type, profile.id) { selectedGenre?.let { val found = RealCatalog.genre(type, it); items = if (profile.kids) kidSafe(found) else found } }'
+          )
+          text = text.replace(
+              'val items = (movies + series).filter { it.id in ids }',
+              'val saved = (movies + series).filter { it.id in ids }; val items = if (profile.kids) kidSafe(saved) else saved'
+          )
+          text = text.replace(
+              'showProfiles = true\n            })',
+              'showProfiles = it.size > 1\n            })'
+          )
 
           path.write_text(text)
           PY
 
       - name: Set up Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -100,26 +156,26 @@ jobs:
             --ks-key-alias blustream \
             --ks-pass pass:blustreamalpha \
             --key-pass pass:blustreamalpha \
-            --out release/BluStream-0.7.0-alpha-debug.apk \
+            --out release/BluStream-2.0.0-alpha-debug.apk \
             app/build/outputs/apk/debug/app-debug.apk
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose release/BluStream-0.7.0-alpha-debug.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose release/BluStream-2.0.0-alpha-debug.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BluStream-0.7.0-alpha-APK
-          path: release/BluStream-0.7.0-alpha-debug.apk
+          name: BluStream-2.0.0-alpha-APK
+          path: release/BluStream-2.0.0-alpha-debug.apk
           if-no-files-found: error
 
       - name: Publish GitHub pre-release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v0.7.0-alpha.${GITHUB_RUN_NUMBER}"
+          TAG="v2.0.0-alpha.${GITHUB_RUN_NUMBER}"
           gh release create "$TAG" \
-            release/BluStream-0.7.0-alpha-debug.apk \
+            release/BluStream-2.0.0-alpha-debug.apk \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
-            --title "BluStream 0.7 Alpha ${GITHUB_RUN_NUMBER}" \
+            --title "BluStream 2.0 Alpha ${GITHUB_RUN_NUMBER}" \
             --notes-file CHANGELOG.md \
             --prerelease
