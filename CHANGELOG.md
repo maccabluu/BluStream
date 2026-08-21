@@ -1,5 +1,28 @@
 # BluStream Changelog
 
+## v2.3
+
+BluStream 2.3 Alpha adds proper TV episode browsing and a clearer playback flow.
+
+### Added
+
+- Season selector on TV show detail pages
+- Episode list with episode numbers, titles, thumbnails and summaries where metadata provides them
+- Episode-specific source lookup
+- Large Play button after compatible sources are found
+- Selected episode indicator
+
+### Fixed
+
+- TV shows no longer search the whole series ID when an episode is selected
+- Source results are cleared when switching episodes or seasons
+- Users no longer need to guess which episode a stream belongs to
+
+### Changed
+
+- Current Android release is now BluStream 2.3 Alpha
+- GitHub Actions publishes BluStream-2.3-alpha.apk as release v2.3
+
 ## v2.2
 
 BluStream 2.2 Alpha fixes title-page playback and navigation.
