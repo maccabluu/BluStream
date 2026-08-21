@@ -26,6 +26,11 @@ BluStream 0.7 Alpha is the current Android development version. Android builds a
 - Kids profile toggle
 - Add up to 5 profiles
 - Remove profiles
+- Inline source lookup from movie and show detail pages
+- Large Play button appears after compatible sources are found
+- Source picker lists available compatible streams
+- Episode selection feeds directly into source lookup
+- Built-in Media3 player opens from the title page
 
 ## Home and browsing
 
@@ -35,12 +40,13 @@ BluStream uses real movie and show metadata for browsing. The home screen includ
 
 - Stremio-compatible add-on manager
 - HTTP and HTTPS manifest support
+- Detail pages search installed add-ons for compatible sources
 - Direct HTTP and HTTPS playback
 - External URI handling
 - YouTube source handling
 - Torrent and magnet source handling
 - Native P2P engine through jlibtorrent
-- Media3 ExoPlayer playback
+- Media3 ExoPlayer playback with standard player controls
 
 ## Built-in updates
 
