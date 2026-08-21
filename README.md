@@ -1,27 +1,27 @@
-# BluStream 2.0 Alpha
+# BluStream 2.1 Alpha
 
 BluStream is an Android, iOS and TV streaming app project.
 
 ## Current status
 
-BluStream 2.0 Alpha is the current Android development version. Android builds are produced through GitHub Actions. The iOS project remains available for Xcode testing and further feature parity work.
+BluStream 2.1 Alpha is the current Android development version. Android builds are produced through GitHub Actions. The iOS project remains available for Xcode testing and further feature parity work.
 
-## New in 2.0 Alpha
+## New in 2.1 Alpha
 
+- Proper face-style profile avatars instead of emoji avatars
+- Automatic conversion of older emoji profile data to face avatars
+- Built-in update checker restored inside Settings > App
+- Automatic GitHub release checks after launch with a 15-minute cooldown
+- Update now downloads the APK and opens Android's installer
+- What's new shows the current GitHub release notes
 - Working See All navigation from home rows
-- Face-style avatars for profiles
-- Automatic profile selection when only one profile exists
-- Kids profiles filter home, movies, shows, search and genres toward family and animation content
-- Add-ons stored separately for each profile
-- Safer add-on installation with duplicate protection and manifest validation
-- Add-on refresh checks
-- Stremio-compatible add-on support
+- Kids profiles filter home, movies, shows and search toward family and animation content
+- Add-ons remain stored separately for each profile
 - Real movie and show metadata and artwork
 - Movie and series detail pages
-- Seasons and episodes
 - Source finder and built-in Media3 playback
-- Stable BluStream alpha APK signing
-- Built-in GitHub update checks
+- Stable BluStream APK signing
+- BlueStacks artwork compatibility loading
 
 ## Supported device targets
 
@@ -54,40 +54,36 @@ BluStream includes built-in metadata browsing through its current metadata provi
 - Torrent and magnet source handling
 - Native P2P engine through jlibtorrent
 
-BluStream 2.0 Alpha is also being prepared for broader lawful HTTP provider adapters. Provider-specific compatibility depends on the provider format and permissions.
-
 ## Profiles
 
-BluStream supports multiple local profiles with editable names, face avatars, Kids mode, separate My Stuff data and separate installed add-ons.
+BluStream supports multiple local profiles with editable names, face avatars, Kids mode and separate installed add-ons.
 
 When only one profile exists, BluStream skips the Who's Watching screen automatically. Profile management remains available from the menu.
 
 ## Kids profiles
 
-Kids profiles restrict BluStream browsing toward titles tagged with Family, Animation, Kids or Children metadata. Search and genre browsing follow the same profile filter.
-
-## Planned during the 2.0 alpha cycle
-
-- Per-profile watch history and playback progress
-- Watchlists with save-from-search support
-- Similar titles on detail pages
-- Preferred audio and subtitle language per profile
-- Autoplay and next episode
-- Catalog show, hide and reorder controls
-- Browser-based configurator
-- Optional multi-device sync for Android TV, Android phone and iOS
+Kids profiles restrict BluStream browsing toward Family and Animation metadata. Search follows the same profile filter.
 
 ## Built-in updates
 
-BluStream checks the official GitHub Releases feed after launch. Automatic checks use a 15-minute cooldown. Settings includes a manual Check for updates action.
+BluStream checks the official GitHub Releases feed after launch. Automatic checks use a 15-minute cooldown.
 
-When a newer alpha release is available, BluStream offers Update now, What's new and Later.
+Settings > App > Check for updates runs a manual check immediately.
+
+When a newer release is available, BluStream offers:
+
+- Update now
+- What's new
+- Later
+
+Update now downloads the APK inside BluStream and opens Android's package installer.
 
 ## Android
 
+- Current Android alpha: 2.1
 - Minimum Android version: Android 8.0
 - AndroidX Media3
-- Coil artwork loading
+- Coil artwork loading with BlueStacks compatibility
 - ARM, ARM64, x86 and x86_64 P2P libraries
 - GitHub Actions builds
 - GitHub Releases distribution
@@ -99,6 +95,23 @@ When a newer alpha release is available, BluStream offers Update now, What's new
 - AVPlayer playback foundation
 - iPhone and iPad project support
 - Xcode build workflow
+
+## Release numbering
+
+BluStream releases now follow simple version numbers such as:
+
+2.0 → 2.1 → 2.2 → 2.3 → 2.4 → 2.5 → 3.0
+
+## Planned
+
+- Per-profile watch history and playback progress
+- Watchlists with save-from-search support
+- Similar titles on detail pages
+- Preferred audio and subtitle language per profile
+- Autoplay and next episode
+- Catalog show, hide and reorder controls
+- Browser-based configurator
+- Optional multi-device sync for Android TV, Android phone and iOS
 
 ## Changelog
 
