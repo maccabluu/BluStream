@@ -206,7 +206,7 @@ private fun V20Shell(profile: V20Profile, screen: V20Screen, onScreen: (V20Scree
     ModalNavigationDrawer(drawerState = drawer, drawerContent = {
         ModalDrawerSheet(drawerContainerColor = Color(0xFF071827)) {
             Spacer(Modifier.height(18.dp))
-            Text("BLUSTREAM 2.1", Modifier.padding(18.dp), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text("BLUSTREAM 2.3", Modifier.padding(18.dp), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             listOf(V20Screen.HOME to "Home", V20Screen.MOVIES to "Movies", V20Screen.SHOWS to "Shows", V20Screen.SEARCH to "Search", V20Screen.MY_STUFF to "My Stuff", V20Screen.ADDONS to "Add-ons", V20Screen.PROFILES to "Profiles", V20Screen.SETTINGS to "Settings").forEach { (target, label) ->
                 NavigationDrawerItem(label = { Text(label) }, selected = screen == target, onClick = { onScreen(target); scope.launch { drawer.close() } }, modifier = Modifier.padding(horizontal = 10.dp))
             }
@@ -375,11 +375,7 @@ private fun V20Settings(profile: V20Profile) {
         item { OutlinedTextField(language, { language = it }, label = { Text("Preferred language") }, modifier = Modifier.fillMaxWidth()) }
         item { HorizontalDivider() }
         item { Text("App", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold) }
-        item {
-            Button(onClick = { activity?.let { UpdateManager.check(it, manual = true) } }, enabled = activity != null, modifier = Modifier.fillMaxWidth()) {
-                Text("Check for updates")
-            }
-        }
+        item { Button(onClick = { activity?.let { UpdateManager.check(it, manual = true) } }, enabled = activity != null, modifier = Modifier.fillMaxWidth()) { Text("Check for updates") } }
         item { Text("BluStream checks GitHub Releases after launch. Automatic checks use a 15-minute cooldown. Update now downloads the APK in BluStream and opens Android's installer.", color = Color(0xFFBCD2E5)) }
         item { Text("Privacy", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold) }
         item { Text("No BluStream account registration. No BluStream sign-up wall. Profile data stays local in this alpha build.", color = Color(0xFFBCD2E5)) }
@@ -390,25 +386,33 @@ private fun V20Settings(profile: V20Profile) {
 private fun V20Details(media: RealMedia, profile: V20Profile, onBack: () -> Unit, onPlay: (String, String) -> Unit, onMessage: (String) -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var sources by remember { mutableStateOf<List<BluStreamSource>>(emptyList()) }
-    var loading by remember { mutableStateOf(false) }
-    var connectingId by remember { mutableStateOf<String?>(null) }
+    var details by remember(media.id) { mutableStateOf<RealMediaDetails?>(null) }
+    var selectedSeason by remember(media.id) { mutableStateOf<Int?>(null) }
+    var selectedEpisode by remember(media.id) { mutableStateOf<RealEpisode?>(null) }
+    var sources by remember(media.id) { mutableStateOf<List<BluStreamSource>>(emptyList()) }
+    var loading by remember(media.id) { mutableStateOf(false) }
+    var connectingId by remember(media.id) { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(media.id, media.type) {
+        details = RealCatalog.details(media.type, media.id)
+        if (media.type == "series") {
+            val episodes = details?.episodes.orEmpty().filter { it.season > 0 }
+            val first = episodes.minWithOrNull(compareBy<RealEpisode> { it.season }.thenBy { it.episode })
+            selectedSeason = first?.season
+            selectedEpisode = first
+        }
+    }
 
     fun playSource(source: BluStreamSource) {
+        val playTitle = selectedEpisode?.let { "${media.name} • S${it.season} E${it.episode} • ${it.title}" } ?: media.name
         when (source.kind) {
-            BluSourceKind.DIRECT -> source.url?.let { onPlay(source.name.ifBlank { media.name }, it) }
+            BluSourceKind.DIRECT -> source.url?.let { onPlay(playTitle, it) }
             BluSourceKind.TORRENT -> scope.launch {
-                connectingId = source.name + source.description
+                connectingId = source.stableKey
                 onMessage("Connecting to P2P peers…")
                 runCatching { P2pEngine.prepare(context.applicationContext, source) }
-                    .onSuccess { prepared ->
-                        connectingId = null
-                        onPlay(source.name.ifBlank { media.name }, prepared.url)
-                    }
-                    .onFailure {
-                        connectingId = null
-                        onMessage(it.message ?: "P2P playback failed")
-                    }
+                    .onSuccess { prepared -> connectingId = null; onPlay(playTitle, prepared.url) }
+                    .onFailure { connectingId = null; onMessage(it.message ?: "P2P playback failed") }
             }
             BluSourceKind.EXTERNAL, BluSourceKind.YOUTUBE -> source.playableTarget?.let {
                 runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) }
@@ -418,14 +422,32 @@ private fun V20Details(media: RealMedia, profile: V20Profile, onBack: () -> Unit
         }
     }
 
+    fun findSources() {
+        val lookupId = if (media.type == "series") selectedEpisode?.id else media.id
+        if (lookupId.isNullOrBlank()) {
+            onMessage("Choose an episode first.")
+            return
+        }
+        scope.launch {
+            loading = true
+            sources = emptyList()
+            runCatching { resolveInstalledAddonStreams(context, profile.id, media.type, lookupId) }
+                .onSuccess { sources = it; if (it.isEmpty()) onMessage("No playable sources found for this title.") }
+                .onFailure { onMessage(it.message ?: "Source search failed") }
+            loading = false
+        }
+    }
+
+    val episodes = details?.episodes.orEmpty().filter { it.season > 0 }
+    val seasons = episodes.map { it.season }.distinct().sorted()
+    val seasonEpisodes = episodes.filter { it.season == selectedSeason }.sortedBy { it.episode }
+
     LazyColumn(Modifier.fillMaxSize().background(Color(0xFF020C16)), contentPadding = PaddingValues(bottom = 24.dp)) {
         item {
             Box(Modifier.fillMaxWidth().height(300.dp)) {
                 AsyncImage(media.background, media.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xFF020C16)))))
-                Button(onClick = onBack, modifier = Modifier.padding(16.dp)) {
-                    Text("← Home")
-                }
+                Button(onClick = onBack, modifier = Modifier.padding(16.dp)) { Text("← Home") }
             }
         }
         item {
@@ -436,31 +458,76 @@ private fun V20Details(media: RealMedia, profile: V20Profile, onBack: () -> Unit
                 Spacer(Modifier.height(12.dp))
                 Text(media.description, color = Color(0xFFD2DEE9))
                 Spacer(Modifier.height(16.dp))
-                Button(enabled = !loading, onClick = { scope.launch {
-                    loading = true
-                    runCatching { resolveInstalledAddonStreams(context, profile.id, media.type, media.id) }
-                        .onSuccess { sources = it; if (it.isEmpty()) onMessage("No playable sources found in installed add-ons.") }
-                        .onFailure { onMessage(it.message ?: "Source search failed") }
-                    loading = false
-                } }) { Text(if (loading) "Finding…" else "Find sources") }
+
+                if (media.type == "series" && episodes.isNotEmpty()) {
+                    Text("Episodes", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(10.dp))
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(seasons) { season ->
+                            FilterChip(
+                                selected = selectedSeason == season,
+                                onClick = {
+                                    selectedSeason = season
+                                    selectedEpisode = episodes.filter { it.season == season }.minByOrNull { it.episode }
+                                    sources = emptyList()
+                                },
+                                label = { Text("Season $season") }
+                            )
+                        }
+                    }
+                    selectedEpisode?.let { ep ->
+                        Spacer(Modifier.height(10.dp))
+                        Text("Selected: S${ep.season} E${ep.episode} • ${ep.title}", color = Color(0xFFBCD2E5))
+                    }
+                    Spacer(Modifier.height(12.dp))
+                }
+
+                Button(enabled = !loading && (media.type != "series" || selectedEpisode != null), onClick = { findSources() }, modifier = Modifier.fillMaxWidth()) {
+                    Text(if (loading) "Finding…" else if (media.type == "series") "Find episode sources" else "Find sources")
+                }
+
+                if (sources.isNotEmpty()) {
+                    Spacer(Modifier.height(10.dp))
+                    Button(onClick = { playSource(sources.first()) }, enabled = connectingId == null, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (connectingId != null) "Connecting…" else "▶ Play")
+                    }
+                }
             }
         }
+
+        if (media.type == "series" && seasonEpisodes.isNotEmpty()) {
+            item { Text("Season ${selectedSeason ?: 1}", Modifier.padding(horizontal = 20.dp, vertical = 14.dp), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold) }
+            items(seasonEpisodes) { episode ->
+                Card(
+                    Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp).clickable {
+                        selectedEpisode = episode
+                        sources = emptyList()
+                    },
+                    colors = CardDefaults.cardColors(containerColor = if (selectedEpisode?.id == episode.id) Color(0xFF123A58) else Color(0xFF0B2033))
+                ) {
+                    Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        AsyncImage(episode.thumbnail, episode.title, Modifier.size(120.dp, 70.dp), contentScale = ContentScale.Crop)
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("${episode.episode}. ${episode.title}", color = Color.White, fontWeight = FontWeight.Bold)
+                            if (episode.overview.isNotBlank()) Text(episode.overview, color = Color(0xFF93A9BD), maxLines = 2, fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+        }
+
+        if (sources.isNotEmpty()) {
+            item { Text("Available sources", Modifier.padding(horizontal = 20.dp, vertical = 14.dp), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold) }
+        }
         items(sources) { source ->
-            val sourceId = source.name + source.description
-            Card(
-                Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF0B2033))
-            ) {
+            Card(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF0B2033))) {
                 Column(Modifier.padding(14.dp)) {
                     Text(source.name.ifBlank { "Stream" }, color = Color.White, fontWeight = FontWeight.Bold)
                     Text(source.description, color = Color(0xFF93A9BD), maxLines = 3)
                     Spacer(Modifier.height(10.dp))
-                    Button(
-                        onClick = { playSource(source) },
-                        enabled = connectingId == null,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(if (connectingId == sourceId) "Connecting…" else "▶ Play")
+                    Button(onClick = { playSource(source) }, enabled = connectingId == null, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (connectingId == source.stableKey) "Connecting…" else "▶ Play")
                     }
                 }
             }
