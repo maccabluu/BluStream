@@ -3,14 +3,16 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <application
         android:name=".BluStreamApplication"
-        android:allowBackup="true"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
         android:label="BluStream"
         android:icon="@drawable/blustream_icon"
         android:roundIcon="@drawable/blustream_icon"
         android:theme="@style/Theme.BluStream"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="false">
         <activity android:name=".BluStreamV20Activity" android:exported="false" />
         <activity android:name=".BluStreamProfileGateActivity" android:exported="true">
             <intent-filter>
