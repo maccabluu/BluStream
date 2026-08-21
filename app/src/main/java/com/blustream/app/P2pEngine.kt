@@ -34,9 +34,17 @@ object P2pEngine {
         ensureStarted()
         val root = File(context.cacheDir, "blustream-p2p").apply { mkdirs() }
         val metadataDir = File(root, "metadata").apply { mkdirs() }
-        val torrentBytes = session.fetchMagnet(magnet, 45, metadataDir)
-            ?: error("Torrent metadata was not received. Check peers and trackers, then try again.")
-        val info = TorrentInfo(torrentBytes)
+
+        var torrentBytes: ByteArray? = null
+        repeat(3) { attempt ->
+            if (torrentBytes == null) {
+                torrentBytes = session.fetchMagnet(magnet, 25, metadataDir)
+                if (torrentBytes == null && attempt < 2) Thread.sleep(1500)
+            }
+        }
+        val metadata = torrentBytes ?: error("No torrent metadata arrived from this source. Try another source or try again later.")
+
+        val info = TorrentInfo(metadata)
         val files = info.files()
         val fileIndex = chooseFile(files.numFiles(), source.fileIdx) { index -> files.fileName(index) to files.fileSize(index) }
         val priorities = Priority.array(Priority.IGNORE, files.numFiles())
@@ -167,7 +175,8 @@ private class P2pHttpServer {
                     if (range != null) append("Content-Range: bytes $start-$end/${media.size}\r\n")
                     append("Connection: close\r\n\r\n")
                 }
-                output.write(headers.toByteArray(StandardCharsets.ISO_8859_1)); output.flush()
+                output.write(headers.toByteArray(StandardCharsets.ISO_8859_1))
+                output.flush()
                 if (method == "HEAD" || length <= 0) return
                 RandomAccessFile(media.file, "r").use { file ->
                     file.seek(start)
@@ -179,8 +188,10 @@ private class P2pHttpServer {
                         media.waitForRange(position, position + chunk - 1)
                         val read = file.read(buffer, 0, chunk)
                         if (read <= 0) break
-                        output.write(buffer, 0, read); output.flush()
-                        position += read; remaining -= read
+                        output.write(buffer, 0, read)
+                        output.flush()
+                        position += read
+                        remaining -= read
                     }
                 }
             } catch (_: Throwable) {
@@ -194,8 +205,10 @@ private class P2pHttpServer {
         var matched = 0
         val marker = byteArrayOf(13, 10, 13, 10)
         while (bytes.size < 64 * 1024) {
-            val value = input.read(); if (value < 0) break
-            val b = value.toByte(); bytes.add(b)
+            val value = input.read()
+            if (value < 0) break
+            val b = value.toByte()
+            bytes.add(b)
             matched = if (b == marker[matched]) matched + 1 else if (b == marker[0]) 1 else 0
             if (matched == marker.size) break
         }
@@ -221,7 +234,8 @@ private class P2pHttpServer {
         val body = message.toByteArray(StandardCharsets.UTF_8)
         val status = if (code == 404) "404 Not Found" else "500 Internal Server Error"
         output.write("HTTP/1.1 $status\r\nContent-Type: text/plain\r\nContent-Length: ${body.size}\r\nConnection: close\r\n\r\n".toByteArray(StandardCharsets.ISO_8859_1))
-        output.write(body); output.flush()
+        output.write(body)
+        output.flush()
     }
 
     private fun mimeFor(name: String): String = when (name.substringAfterLast('.', "").lowercase()) {
