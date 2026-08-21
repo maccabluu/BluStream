@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 
 @Composable
-fun BluStreamGenres(kids: Boolean, onSelect: (RealMedia) -> Unit) {
+internal fun BluStreamGenres(kids: Boolean, onSelect: (RealMedia) -> Unit) {
     val scope = rememberCoroutineScope()
     val allGenres = if (kids) {
         listOf("Animation", "Family", "Adventure", "Comedy", "Fantasy")
