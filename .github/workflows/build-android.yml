@@ -24,7 +24,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Apply source picker build hotfix
+      - name: Apply Android source hotfix
         shell: bash
         run: |
           python3 - <<'PY'
@@ -32,15 +32,18 @@ jobs:
           path = Path('app/src/main/java/com/blustream/app/BluStreamShell.kt')
           text = path.read_text()
 
-          old = 'Text("▶ Play ${chosenEpisode?.let { "S${it.season} E${it.episode}" } ?: resolved.name}", fontSize = 17.sp)'
-          new = 'val playLabel = chosenEpisode?.let { episode -> "S${episode.season} E${episode.episode}" } ?: resolved.name\n                    Text("▶ Play $playLabel", fontSize = 17.sp)'
-          if old in text:
-              text = text.replace(old, new)
+          old_play = 'Text("▶ Play ${chosenEpisode?.let { "S${it.season} E${it.episode}" } ?: resolved.name}", fontSize = 17.sp)'
+          new_play = 'val playLabel = chosenEpisode?.let { episode -> "S${episode.season} E${episode.episode}" } ?: resolved.name\n                    Text("▶ Play $playLabel", fontSize = 17.sp)'
+          if old_play in text:
+              text = text.replace(old_play, new_play)
 
-          single_close = '\n}\n\n@Composable\nprivate fun ProfilePickerV07'
-          double_close = '\n}\n}\n\n@Composable\nprivate fun ProfilePickerV07'
-          if double_close not in text and single_close in text:
-              text = text.replace(single_close, double_close, 1)
+          old_profiles = 'if (p.kids) Text("Kids", color = Color(0xFF75BEFF), fontSize = 11.sp) } } }\n        Spacer(Modifier.height(20.dp)); OutlinedButton(onClick = onManage) { Text("Manage Profiles") }'
+          new_profiles = 'if (p.kids) Text("Kids", color = Color(0xFF75BEFF), fontSize = 11.sp) } } } }\n        Spacer(Modifier.height(20.dp)); OutlinedButton(onClick = onManage) { Text("Manage Profiles") }'
+          if old_profiles in text:
+              text = text.replace(old_profiles, new_profiles, 1)
+              print('Fixed ProfilePicker brace')
+          else:
+              print('ProfilePicker brace already fixed or pattern not found')
 
           path.write_text(text)
           PY
@@ -82,7 +85,7 @@ jobs:
             exit "$STATUS"
           fi
 
-      - name: Save successful source hotfix
+      - name: Save successful Android source hotfix
         if: success()
         shell: bash
         run: |
@@ -90,7 +93,7 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add app/src/main/java/com/blustream/app/BluStreamShell.kt
-            git commit -m "Fix BluStream source picker build [skip ci]"
+            git commit -m "Fix BluStream Android build [skip ci]"
             git push
           fi
 
