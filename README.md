@@ -1,25 +1,23 @@
-# BluStream 2.1 Alpha
+# BluStream 2.2 Alpha
 
 BluStream is an Android, iOS and TV streaming app project.
 
 ## Current status
 
-BluStream 2.1 Alpha is the current Android development version. Android builds are produced through GitHub Actions. The iOS project remains available for Xcode testing and further feature parity work.
+BluStream 2.2 Alpha is the current Android development version. Android builds are produced through GitHub Actions. The iOS project remains available for Xcode testing and further feature parity work.
 
-## New in 2.1 Alpha
+## New in 2.2 Alpha
 
-- Proper face-style profile avatars instead of emoji avatars
-- Automatic conversion of older emoji profile data to face avatars
-- Built-in update checker restored inside Settings > App
-- Automatic GitHub release checks after launch with a 15-minute cooldown
-- Update now downloads the APK and opens Android's installer
-- What's new shows the current GitHub release notes
-- Working See All navigation from home rows
-- Kids profiles filter home, movies, shows and search toward family and animation content
-- Add-ons remain stored separately for each profile
+- Every source card now has a visible Play button
+- Torrent and magnet sources start the built-in P2P engine directly from the movie or show details page
+- The old Select this source from Add-ons for P2P playback message has been removed
+- A visible Home button has been added to title detail pages
+- Home always returns directly to the main BluStream screen
+- Proper face-style profile avatars remain enabled
+- Built-in update checker remains inside Settings > App
+- Automatic GitHub release checks after launch use a 15-minute cooldown
+- Kids profiles continue filtering browsing toward family and animation content
 - Real movie and show metadata and artwork
-- Movie and series detail pages
-- Source finder and built-in Media3 playback
 - Stable BluStream APK signing
 - BlueStacks artwork compatibility loading
 
@@ -70,17 +68,13 @@ BluStream checks the official GitHub Releases feed after launch. Automatic check
 
 Settings > App > Check for updates runs a manual check immediately.
 
-When a newer release is available, BluStream offers:
-
-- Update now
-- What's new
-- Later
+When a newer release is available, BluStream offers Update now, What's new and Later.
 
 Update now downloads the APK inside BluStream and opens Android's package installer.
 
 ## Android
 
-- Current Android alpha: 2.1
+- Current Android alpha: 2.2
 - Minimum Android version: Android 8.0
 - AndroidX Media3
 - Coil artwork loading with BlueStacks compatibility
@@ -98,7 +92,7 @@ Update now downloads the APK inside BluStream and opens Android's package instal
 
 ## Release numbering
 
-BluStream releases now follow simple version numbers such as:
+BluStream releases follow simple version numbers:
 
 2.0 → 2.1 → 2.2 → 2.3 → 2.4 → 2.5 → 3.0
 
