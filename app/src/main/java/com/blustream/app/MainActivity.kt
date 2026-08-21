@@ -121,7 +121,7 @@ fun BluStreamApp() {
                 ) { padding ->
                     Box(Modifier.padding(padding).fillMaxSize()) {
                         when (tab) {
-                            0 -> HomeScreen(profile, onProfile = { showProfilePicker = true }, onSelect = { selectedTitle = it })
+                            0 -> CinematicHomeScreen(profile, onProfile = { showProfilePicker = true }, onSelect = { selectedTitle = it })
                             1 -> DiscoverScreen(profile, onProfile = { showProfilePicker = true }, onSelect = { selectedTitle = it })
                             2 -> SearchScreen(profile, onProfile = { showProfilePicker = true }, onSelect = { selectedTitle = it })
                             3 -> MyListScreen(profile, onProfile = { showProfilePicker = true }, onSelect = { selectedTitle = it })
