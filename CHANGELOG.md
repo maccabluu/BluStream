@@ -1,5 +1,30 @@
 # BluStream Changelog
 
+## v2.4
+
+BluStream 2.4 Alpha improves torrent playback reliability and cleans up status messages.
+
+### Added
+
+- Stremio torrent file-index parsing
+- Stremio torrent tracker-hint parsing
+- Fallback tracker list for torrent sources with limited tracker data
+- Automatic 10-second dismissal for on-screen status and error messages
+- Multiple metadata attempts before a P2P source is marked unavailable
+
+### Fixed
+
+- Torrent sources losing fileIdx and sources fields from compatible Stremio add-ons
+- Some magnets being created without useful tracker information
+- Torrent metadata errors staying pinned across the top of the title page
+- P2P metadata lookup failing after a single attempt
+
+### Changed
+
+- P2P failures now show a shorter message asking users to try another source or retry later
+- Current Android release is now BluStream 2.4 Alpha
+- GitHub Actions publishes BluStream-2.4-alpha.apk as release v2.4
+
 ## v2.3
 
 BluStream 2.3 Alpha adds proper TV episode browsing and a clearer playback flow.
