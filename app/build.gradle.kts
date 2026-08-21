@@ -4,6 +4,8 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val alphaBuild = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0
+
 android {
     namespace = "com.blustream.app"
     compileSdk = 35
@@ -12,8 +14,8 @@ android {
         applicationId = "com.blustream.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 7
-        versionName = "0.6.0-alpha"
+        versionCode = 600000 + alphaBuild
+        versionName = "0.6.0-alpha.$alphaBuild"
     }
 
     compileOptions {
