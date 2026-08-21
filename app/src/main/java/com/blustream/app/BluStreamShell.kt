@@ -155,7 +155,7 @@ private fun BluStreamV07App() {
                 showProfiles = true
             })
             playing != null -> LocalPlayerV07(playing!!.first, playing!!.second) { playing = null }
-            selected != null -> RealDetailV07(profile, selected!!, onBack = { selected = null }, onPlaySource = ::playSource)
+            selected != null -> RealDetailV07(profile, selected!!, onBack = { selected = null }, onPlaySource = { source -> playSource(source) })
             else -> ModalNavigationDrawer(
                 drawerState = drawer,
                 drawerContent = {
@@ -184,7 +184,7 @@ private fun BluStreamV07App() {
                         BluPage.GENRES -> GenrePageV07(profile, { scope.launch { drawer.open() } }, { selected = it })
                         BluPage.SEARCH -> NativeSearchV07(profile, { scope.launch { drawer.open() } }, { selected = it })
                         BluPage.MY_STUFF -> MyStuffPageV07(profile, { scope.launch { drawer.open() } }, { selected = it })
-                        BluPage.ADDONS -> AddonsScreen(profile.name, { showProfiles = true }, ::playSource)
+                        BluPage.ADDONS -> AddonsScreen(profile.name, { showProfiles = true }, { source -> playSource(source) })
                         BluPage.SETTINGS -> SettingsV07(profile, { scope.launch { drawer.open() } }, { manageProfiles = true })
                     }
                     message?.let { Surface(Modifier.align(Alignment.TopCenter).padding(12.dp), color = Color(0xFF173C67), shape = RoundedCornerShape(12.dp)) { Text(it, Modifier.padding(12.dp), color = Color.White) } }
@@ -254,9 +254,14 @@ private fun RealCatalogPageV07(title: String, profile: BluProfile, onMenu: () ->
 @Composable
 private fun NativeSearchV07(profile: BluProfile, onMenu: () -> Unit, onSelect: (RealMedia) -> Unit) {
     val context = LocalContext.current
-    var query by remember { mutableStateOf("") }; var results by remember { mutableStateOf<List<RealMedia>>(emptyList()) }; var loading by remember { mutableStateOf(false) }; var history by remember { mutableStateOf(SearchHistoryStore.load(context, profile.id)) }
+    var query by remember { mutableStateOf("") }
+    var results by remember { mutableStateOf<List<RealMedia>>(emptyList()) }
+    var loading by remember { mutableStateOf(false) }
+    var history by remember { mutableStateOf(SearchHistoryStore.load(context, profile.id)) }
+
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        TopBarV07(profile, onMenu); Text("Search", Modifier.padding(horizontal = 18.dp, vertical = 10.dp), color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Bold)
+        TopBarV07(profile, onMenu)
+        Text("Search", Modifier.padding(horizontal = 18.dp, vertical = 10.dp), color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Bold)
         OutlinedTextField(value = query, onValueChange = { query = it }, singleLine = true, label = { Text("Movies and shows") }, modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp))
         Row(Modifier.fillMaxWidth().padding(18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) { Button(enabled = query.isNotBlank() && !loading, onClick = { loading = true }) { Text("Search") }; if (loading) CircularProgressIndicator(Modifier.size(28.dp)) }
         LaunchedEffect(loading) { if (loading) { results = RealCatalog.search(query); SearchHistoryStore.add(context, profile.id, query); history = SearchHistoryStore.load(context, profile.id); loading = false } }
@@ -271,13 +276,16 @@ private fun NativeSearchV07(profile: BluProfile, onMenu: () -> Unit, onSelect: (
 @Composable
 private fun GenrePageV07(profile: BluProfile, onMenu: () -> Unit, onSelect: (RealMedia) -> Unit) {
     val genres = listOf("Action", "Adventure", "Animation", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Thriller")
-    var selectedGenre by remember { mutableStateOf<String?>(null) }; var items by remember { mutableStateOf<List<RealMedia>>(emptyList()) }; var type by remember { mutableStateOf("movie") }
+    var selectedGenre by remember { mutableStateOf<String?>(null) }
+    var items by remember { mutableStateOf<List<RealMedia>>(emptyList()) }
+    var type by remember { mutableStateOf("movie") }
     LaunchedEffect(selectedGenre, type) { selectedGenre?.let { items = RealCatalog.genre(type, it) } }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         TopBarV07(profile, onMenu); Text("Genres", Modifier.padding(horizontal = 18.dp, vertical = 10.dp), color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Bold)
         Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilterChip(selected = type == "movie", onClick = { type = "movie" }, label = { Text("Movies") }); FilterChip(selected = type == "series", onClick = { type = "series" }, label = { Text("Shows") }) }
-        if (selectedGenre == null) genres.chunked(2).forEach { row -> Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) { row.forEach { genre -> Card(Modifier.weight(1f).height(90.dp).clickable { selectedGenre = genre }, colors = CardDefaults.cardColors(containerColor = Color(0xFF0B2740))) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(genre, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold) } } } } }
-        else { Text("‹ All genres", Modifier.padding(18.dp).clickable { selectedGenre = null; items = emptyList() }, color = Color(0xFF1597FF)); Text(selectedGenre!!, Modifier.padding(horizontal = 18.dp), color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold); PosterGridV07(items, onSelect) }
+        if (selectedGenre == null) {
+            genres.chunked(2).forEach { row -> Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) { row.forEach { genre -> Card(Modifier.weight(1f).height(90.dp).clickable { selectedGenre = genre }, colors = CardDefaults.cardColors(containerColor = Color(0xFF0B2740))) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(genre, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold) } } } } }
+        } else { Text("‹ All genres", Modifier.padding(18.dp).clickable { selectedGenre = null; items = emptyList() }, color = Color(0xFF1597FF)); Text(selectedGenre!!, Modifier.padding(horizontal = 18.dp), color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold); PosterGridV07(items, onSelect) }
     }
 }
 
@@ -365,8 +373,9 @@ private fun RealDetailV07(profile: BluProfile, media: RealMedia, onBack: () -> U
 
             if (sources.isNotEmpty()) {
                 Spacer(Modifier.height(16.dp))
+                val playLabel = chosenEpisode?.let { ep -> "S${ep.season} E${ep.episode}" } ?: resolved.name
                 Button(onClick = { onPlaySource(sources.first()) }, modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(vertical = 14.dp)) {
-                    Text("▶ Play ${chosenEpisode?.let { "S${it.season} E${it.episode}" } ?: resolved.name}", fontSize = 17.sp)
+                    Text("▶ Play $playLabel", fontSize = 17.sp)
                 }
                 Spacer(Modifier.height(12.dp))
                 Text("Choose source", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
