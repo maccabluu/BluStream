@@ -90,17 +90,6 @@ jobs:
       - name: Build debug APK
         run: gradle --no-daemon --stacktrace :app:assembleDebug
 
-      - name: Save artwork compatibility fix
-        shell: bash
-        run: |
-          if ! git diff --quiet -- app/src/main/java/com/blustream/app/BluStreamShell.kt; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add app/src/main/java/com/blustream/app/BluStreamShell.kt
-            git commit -m "Fix BluStream artwork rendering on emulators [skip ci]"
-            git push
-          fi
-
       - name: Sign APK with stable BluStream alpha key
         shell: bash
         run: |
