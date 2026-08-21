@@ -1,5 +1,27 @@
 # BluStream Changelog
 
+## v2.2
+
+BluStream 2.2 Alpha fixes title-page playback and navigation.
+
+### Added
+
+- Visible Play button on every source card
+- Direct P2P launch from torrent and magnet source cards
+- Connecting state while the P2P engine prepares a source
+- Visible Home button on movie and show detail pages
+
+### Fixed
+
+- Removed the Select this source from Add-ons for P2P playback dead-end
+- Torrent sources now pass directly into BluStream's P2P engine from the title page
+- Home from a title page now returns to the main BluStream screen
+
+### Changed
+
+- Current Android release is now BluStream 2.2 Alpha
+- GitHub Actions publishes BluStream-2.2-alpha.apk as release v2.2
+
 ## v2.1
 
 BluStream 2.1 Alpha restores the in-app update controls and fixes the profile and artwork problems seen in the 2.0 test build.
