@@ -14,8 +14,8 @@ android {
         applicationId = "com.blustream.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3100000 + alphaBuild
-        versionName = "3.1"
+        versionCode = 3200000 + alphaBuild
+        versionName = "3.2"
     }
 
     compileOptions {
