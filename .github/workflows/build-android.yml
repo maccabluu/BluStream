@@ -37,10 +37,10 @@ jobs:
           if old in text:
               text = text.replace(old, new)
 
-          marker = '\n@Composable\nprivate fun ProfilePickerV07'
-          repair_marker = '\n}\n\n@Composable\nprivate fun ProfilePickerV07'
-          if marker in text and repair_marker not in text:
-              text = text.replace(marker, '\n}\n' + marker, 1)
+          single_close = '\n}\n\n@Composable\nprivate fun ProfilePickerV07'
+          double_close = '\n}\n}\n\n@Composable\nprivate fun ProfilePickerV07'
+          if double_close not in text and single_close in text:
+              text = text.replace(single_close, double_close, 1)
 
           path.write_text(text)
           PY
@@ -76,7 +76,7 @@ jobs:
               echo "BluStream Android build failed on commit $GITHUB_SHA"
               echo
               echo '```text'
-              grep -E "(^e: | error: |Unresolved reference|Cannot access|Type mismatch|No value passed|Too many arguments|FAILURE:|What went wrong|Compilation error|Syntax error)" build.log | tail -n 160
+              grep -E "(^e: | error: |Unresolved reference|Cannot access|Type mismatch|No value passed|Too many arguments|FAILURE:|What went wrong|Compilation error|Syntax error)" build.log | tail -n 180
               echo '```'
             } > build-error.md
             exit "$STATUS"
