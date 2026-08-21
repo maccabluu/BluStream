@@ -1,6 +1,6 @@
 # BluStream 0.5.0 Alpha
 
-BluStream is an Android streaming app starter for legal, licensed, public-domain, or user-owned media.
+BluStream is an Android/IOS/TV streaming app 
 
 ## Added in 0.2
 
