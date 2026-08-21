@@ -9,6 +9,7 @@ on:
       - 'settings.gradle.kts'
       - 'gradle.properties'
       - '.github/workflows/build-android.yml'
+      - '.github/blustream-alpha.keystore.b64'
   workflow_dispatch:
 
 permissions:
@@ -22,6 +23,50 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Apply BlueStacks artwork compatibility fix
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('app/src/main/java/com/blustream/app/BluStreamShell.kt')
+          text = path.read_text()
+
+          if 'import coil.request.ImageRequest' not in text:
+              text = text.replace(
+                  'import coil.compose.AsyncImage\n',
+                  'import coil.compose.AsyncImage\nimport coil.request.ImageRequest\n'
+              )
+
+          helper = '''@Composable
+          private fun bluImageRequest(url: String): ImageRequest {
+              val context = LocalContext.current
+              return remember(url) {
+                  ImageRequest.Builder(context)
+                      .data(url)
+                      .allowHardware(false)
+                      .crossfade(true)
+                      .build()
+              }
+          }
+
+          '''
+          marker = '@Composable\nprivate fun TopBarV07'
+          if 'private fun bluImageRequest' not in text and marker in text:
+              text = text.replace(marker, helper.replace('          ', '') + marker, 1)
+
+          replacements = {
+              'model = hero.background.ifBlank { hero.poster }': 'model = bluImageRequest(hero.background.ifBlank { hero.poster })',
+              'model = item.poster': 'model = bluImageRequest(item.poster)',
+              'model = resolved.background.ifBlank { resolved.poster }': 'model = bluImageRequest(resolved.background.ifBlank { resolved.poster })',
+              'model = ep.thumbnail': 'model = bluImageRequest(ep.thumbnail)',
+          }
+          for old, new in replacements.items():
+              text = text.replace(old, new)
+
+          path.write_text(text)
+          PY
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -45,10 +90,30 @@ jobs:
       - name: Build debug APK
         run: gradle --no-daemon --stacktrace :app:assembleDebug
 
-      - name: Collect APK
+      - name: Save artwork compatibility fix
+        shell: bash
+        run: |
+          if ! git diff --quiet -- app/src/main/java/com/blustream/app/BluStreamShell.kt; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add app/src/main/java/com/blustream/app/BluStreamShell.kt
+            git commit -m "Fix BluStream artwork rendering on emulators [skip ci]"
+            git push
+          fi
+
+      - name: Sign APK with stable BluStream alpha key
+        shell: bash
         run: |
           mkdir -p release
-          cp app/build/outputs/apk/debug/app-debug.apk release/BluStream-0.7.0-alpha-debug.apk
+          base64 -d .github/blustream-alpha.keystore.b64 > /tmp/blustream-alpha.jks
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" sign \
+            --ks /tmp/blustream-alpha.jks \
+            --ks-key-alias blustream \
+            --ks-pass pass:blustreamalpha \
+            --key-pass pass:blustreamalpha \
+            --out release/BluStream-0.7.0-alpha-debug.apk \
+            app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose release/BluStream-0.7.0-alpha-debug.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
