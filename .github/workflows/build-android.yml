@@ -42,24 +42,24 @@ jobs:
       - name: Collect APK
         run: |
           mkdir -p release
-          cp app/build/outputs/apk/debug/app-debug.apk release/BluStream-0.5.0-alpha-debug.apk
+          cp app/build/outputs/apk/debug/app-debug.apk release/BluStream-0.6.0-alpha-debug.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BluStream-0.5.0-alpha-APK
-          path: release/BluStream-0.5.0-alpha-debug.apk
+          name: BluStream-0.6.0-alpha-APK
+          path: release/BluStream-0.6.0-alpha-debug.apk
           if-no-files-found: error
 
       - name: Publish GitHub pre-release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v0.5.0-alpha.${GITHUB_RUN_NUMBER}"
+          TAG="v0.6.0-alpha.${GITHUB_RUN_NUMBER}"
           gh release create "$TAG" \
-            release/BluStream-0.5.0-alpha-debug.apk \
+            release/BluStream-0.6.0-alpha-debug.apk \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
-            --title "BluStream 0.5 Alpha ${GITHUB_RUN_NUMBER}" \
-            --notes "Automatic BluStream Android alpha build. Download the APK below." \
+            --title "BluStream 0.6 Alpha ${GITHUB_RUN_NUMBER}" \
+            --notes "Automatic BluStream Android 0.6 alpha build with the new streaming-style interface." \
             --prerelease
