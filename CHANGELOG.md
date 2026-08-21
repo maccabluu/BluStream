@@ -1,5 +1,56 @@
 # BluStream Changelog
 
+## v2.0.0-alpha
+
+BluStream 2.0 Alpha focuses on profiles, safer add-on handling, kids browsing and cleaner navigation.
+
+### Added
+
+- Face-style profile avatars
+- Automatic profile selection when only one profile exists
+- Per-profile add-on storage
+- Add-on refresh check
+- Duplicate add-on protection
+- Safer manifest validation and install error handling
+- Kids-only home, movie, show, search and genre filtering for Kids profiles
+- Working See All navigation from home rails
+- BluStream 2.0 Alpha release naming and APK versioning
+
+### Changed
+
+- Add-on installs no longer replace the current screen or silently fail
+- Installed add-ons are separated by profile
+- Directory results are de-duplicated before rendering
+- Artwork keeps the emulator compatibility path used for BlueStacks
+- Kids profiles focus on Family, Animation, Kids and Children metadata categories
+- GitHub releases now publish as BluStream 2.0 Alpha
+
+### Device targets
+
+- Android phones, Android 8.0+
+- Android TV 11+ on ARM devices
+- NVIDIA Shield
+- onn 4K Streaming Box
+- iPhone and iPad through the separate iOS project
+
+### Privacy direction
+
+- No BluStream account registration requirement
+- No BluStream sign-up wall
+- Local profile storage remains the default
+
+### Planned during the 2.0 alpha cycle
+
+- Per-profile watch history and playback progress
+- Full watchlists, including saving search results directly
+- Similar titles on detail pages
+- Preferred audio and subtitle language per profile
+- Autoplay and next-episode controls
+- Catalog show, hide and reorder controls
+- Browser-based configurator
+- Optional multi-device sync
+- Broader compatible extension adapters for lawful HTTP media providers
+
 ## v0.7.0-alpha
 
 This release expands BluStream into a fuller streaming-style app with native browsing, profiles and direct title-page playback.
