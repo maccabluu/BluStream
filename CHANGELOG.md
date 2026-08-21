@@ -1,5 +1,36 @@
 # BluStream Changelog
 
+## v2.5
+
+BluStream 2.5 Alpha changes startup and stream priority for faster everyday use.
+
+### Added
+
+- Dedicated Who's Watching launch screen shown before the main app
+- New BLU STREAM branding with the STREAM ANYTHING tagline on the startup profile screen
+- Fast source ranking for compatible add-on results
+- FAST DIRECT label for direct stream results
+
+### Changed
+
+- HTTPS direct streams are preferred first
+- HTTP direct streams are preferred next
+- External hosted and YouTube sources follow
+- P2P torrent sources now sit lower in the list as fallback sources
+- The main Play action selects the fastest ranked available source first
+- Who's Watching no longer gets skipped when one profile exists
+- Current Android release is now BluStream 2.5 Alpha
+- GitHub Actions publishes BluStream-2.5-alpha.apk as release v2.5
+
+### Kept
+
+- P2P fallback playback
+- TV seasons and episode selection
+- Title-page Play buttons
+- 10-second status-message dismissal
+- Built-in update checker
+- Kids profile filtering
+
 ## v2.4
 
 BluStream 2.4 Alpha improves torrent playback reliability and cleans up status messages.
