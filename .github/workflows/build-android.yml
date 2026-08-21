@@ -3,10 +3,17 @@ name: Build BluStream Android APK
 on:
   push:
     branches: [main]
+    paths:
+      - 'app/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle.properties'
+      - '.github/workflows/build-android.yml'
   workflow_dispatch:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   build:
@@ -37,7 +44,32 @@ jobs:
           gradle-version: '8.9'
 
       - name: Build debug APK
-        run: gradle --no-daemon --stacktrace :app:assembleDebug
+        id: gradle_build
+        shell: bash
+        run: |
+          set +e
+          gradle --no-daemon --stacktrace :app:assembleDebug 2>&1 | tee build.log
+          STATUS=${PIPESTATUS[0]}
+          if [ "$STATUS" -ne 0 ]; then
+            {
+              echo "BluStream Android build failed on commit $GITHUB_SHA"
+              echo
+              echo '```text'
+              grep -E "(^e: | error: |Unresolved reference|Cannot access|Type mismatch|No value passed|Too many arguments|FAILURE:|What went wrong|Compilation error)" build.log | tail -n 120
+              echo '```'
+            } > build-error.md
+            exit "$STATUS"
+          fi
+
+      - name: Report build error
+        if: failure() && steps.gradle_build.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "CI build error ${GITHUB_RUN_NUMBER}" \
+            --body-file build-error.md || true
 
       - name: Collect APK
         run: |
