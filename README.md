@@ -1,21 +1,23 @@
-# BluStream 2.2 Alpha
+# BluStream 2.3 Alpha
 
 BluStream is an Android, iOS and TV streaming app project.
 
 ## Current status
 
-BluStream 2.2 Alpha is the current Android development version. Android builds are produced through GitHub Actions. The iOS project remains available for Xcode testing and further feature parity work.
+BluStream 2.3 Alpha is the current Android development version. Android builds are produced through GitHub Actions. The iOS project remains available for Xcode testing and further feature parity work.
 
-## New in 2.2 Alpha
+## New in 2.3 Alpha
 
-- Every source card now has a visible Play button
-- Torrent and magnet sources start the built-in P2P engine directly from the movie or show details page
-- The old Select this source from Add-ons for P2P playback message has been removed
-- A visible Home button has been added to title detail pages
-- Home always returns directly to the main BluStream screen
+- TV show detail pages now load seasons and episodes from built-in metadata
+- Season selector added to series pages
+- Episodes show title, episode number, thumbnail and summary where available
+- Selecting an episode clears old sources and searches specifically for that episode
+- A large Play button appears after compatible sources are found
+- Every source card still has its own Play button
+- Torrent and magnet sources start the built-in P2P engine directly
+- Home button remains on title detail pages
 - Proper face-style profile avatars remain enabled
 - Built-in update checker remains inside Settings > App
-- Automatic GitHub release checks after launch use a 15-minute cooldown
 - Kids profiles continue filtering browsing toward family and animation content
 - Real movie and show metadata and artwork
 - Stable BluStream APK signing
@@ -74,7 +76,7 @@ Update now downloads the APK inside BluStream and opens Android's package instal
 
 ## Android
 
-- Current Android alpha: 2.2
+- Current Android alpha: 2.3
 - Minimum Android version: Android 8.0
 - AndroidX Media3
 - Coil artwork loading with BlueStacks compatibility
