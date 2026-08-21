@@ -110,7 +110,10 @@ fun BluStreamV20App() {
                 showPicker = false
             })
             playingUrl != null -> V20Player(playingTitle, playingUrl!!) { playingUrl = null }
-            selected != null -> V20Details(selected!!, active!!, { selected = null }, { title, url ->
+            selected != null -> V20Details(selected!!, active!!, {
+                selected = null
+                screen = V20Screen.HOME
+            }, { title, url ->
                 playingTitle = title
                 playingUrl = url
             }, { message = it })
@@ -203,7 +206,7 @@ private fun V20Shell(profile: V20Profile, screen: V20Screen, onScreen: (V20Scree
     ModalNavigationDrawer(drawerState = drawer, drawerContent = {
         ModalDrawerSheet(drawerContainerColor = Color(0xFF071827)) {
             Spacer(Modifier.height(18.dp))
-            Text("BLUSTREAM 2.0", Modifier.padding(18.dp), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text("BLUSTREAM 2.1", Modifier.padding(18.dp), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             listOf(V20Screen.HOME to "Home", V20Screen.MOVIES to "Movies", V20Screen.SHOWS to "Shows", V20Screen.SEARCH to "Search", V20Screen.MY_STUFF to "My Stuff", V20Screen.ADDONS to "Add-ons", V20Screen.PROFILES to "Profiles", V20Screen.SETTINGS to "Settings").forEach { (target, label) ->
                 NavigationDrawerItem(label = { Text(label) }, selected = screen == target, onClick = { onScreen(target); scope.launch { drawer.close() } }, modifier = Modifier.padding(horizontal = 10.dp))
             }
@@ -389,12 +392,40 @@ private fun V20Details(media: RealMedia, profile: V20Profile, onBack: () -> Unit
     val scope = rememberCoroutineScope()
     var sources by remember { mutableStateOf<List<BluStreamSource>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
+    var connectingId by remember { mutableStateOf<String?>(null) }
+
+    fun playSource(source: BluStreamSource) {
+        when (source.kind) {
+            BluSourceKind.DIRECT -> source.url?.let { onPlay(source.name.ifBlank { media.name }, it) }
+            BluSourceKind.TORRENT -> scope.launch {
+                connectingId = source.name + source.description
+                onMessage("Connecting to P2P peers…")
+                runCatching { P2pEngine.prepare(context.applicationContext, source) }
+                    .onSuccess { prepared ->
+                        connectingId = null
+                        onPlay(source.name.ifBlank { media.name }, prepared.url)
+                    }
+                    .onFailure {
+                        connectingId = null
+                        onMessage(it.message ?: "P2P playback failed")
+                    }
+            }
+            BluSourceKind.EXTERNAL, BluSourceKind.YOUTUBE -> source.playableTarget?.let {
+                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) }
+                    .onFailure { onMessage("No app is available to open this source.") }
+            }
+            else -> onMessage("This source type is not playable yet.")
+        }
+    }
+
     LazyColumn(Modifier.fillMaxSize().background(Color(0xFF020C16)), contentPadding = PaddingValues(bottom = 24.dp)) {
         item {
             Box(Modifier.fillMaxWidth().height(300.dp)) {
                 AsyncImage(media.background, media.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xFF020C16)))))
-                Text("‹", color = Color.White, fontSize = 42.sp, modifier = Modifier.padding(16.dp).clickable(onClick = onBack))
+                Button(onClick = onBack, modifier = Modifier.padding(16.dp)) {
+                    Text("← Home")
+                }
             }
         }
         item {
@@ -415,14 +446,23 @@ private fun V20Details(media: RealMedia, profile: V20Profile, onBack: () -> Unit
             }
         }
         items(sources) { source ->
-            Card(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp).clickable {
-                when (source.kind) {
-                    BluSourceKind.DIRECT -> source.url?.let { onPlay(source.name.ifBlank { media.name }, it) }
-                    BluSourceKind.EXTERNAL, BluSourceKind.YOUTUBE -> source.playableTarget?.let { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) }
-                    else -> onMessage("Select this source from Add-ons for P2P playback.")
+            val sourceId = source.name + source.description
+            Card(
+                Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF0B2033))
+            ) {
+                Column(Modifier.padding(14.dp)) {
+                    Text(source.name.ifBlank { "Stream" }, color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(source.description, color = Color(0xFF93A9BD), maxLines = 3)
+                    Spacer(Modifier.height(10.dp))
+                    Button(
+                        onClick = { playSource(source) },
+                        enabled = connectingId == null,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(if (connectingId == sourceId) "Connecting…" else "▶ Play")
+                    }
                 }
-            }, colors = CardDefaults.cardColors(containerColor = Color(0xFF0B2033))) {
-                Column(Modifier.padding(14.dp)) { Text(source.name.ifBlank { "Stream" }, color = Color.White, fontWeight = FontWeight.Bold); Text(source.description, color = Color(0xFF93A9BD), maxLines = 2) }
             }
         }
     }
