@@ -6,16 +6,25 @@ BluStream is an Android / iOS / TV streaming app.
 
 BluStream 0.6 Alpha is the current development branch. Android builds are published through GitHub Actions and GitHub Releases. The iOS project is included for Xcode testing.
 
+## Latest Android UI update
+
+- Bottom navigation removed
+- Home, Discover, Search, My List, Add-ons and Settings moved into the top-left burger menu
+- Switch Profile and Manage Profiles added to the burger menu
+- Who's Watching now supports editable profile names
+- Add up to 5 profiles
+- Remove profiles
+- Profile choices persist on the device
+- Home now loads real movie and series metadata and artwork from the Cinemeta Stremio metadata catalog
+- Real title detail pages with artwork, release information and descriptions
+- Add-on source lookup remains separate from metadata browsing
+
 ## Added in 0.6
 
-- Cinematic BluStream home screen matching the new visual reference
+- Cinematic BluStream home screen
 - BLUSTREAM branded top bar
 - Full-width featured hero artwork
-- Watch Now hero action
-- Continue Watching cards with artwork and progress bars
-- Trending Now poster row
-- Popular Movies poster row
-- See All links on media rails
+- Real movie and series poster rows
 - Dark navy streaming interface with bright blue accents
 - Who's Watching profile screen
 - Discover screen
@@ -27,7 +36,7 @@ BluStream 0.6 Alpha is the current development branch. Android builds are publis
 - Direct playback through AndroidX Media3
 - Existing P2P source handling
 - Existing Stremio-compatible add-on handling
-- New BluStream blue B play icon for the Android launcher
+- BluStream blue B play icon for the Android launcher
 - BluStream branding prepared for Android, iOS and TV
 
 ## Built-in updates
@@ -36,7 +45,7 @@ BluStream checks the official GitHub Releases feed after launch.
 
 Automatic update checks use a 15-minute cooldown.
 
-Settings > App > Check for updates runs a manual check immediately.
+Settings > Check for updates runs a manual check immediately.
 
 When a newer canonical alpha is available, BluStream offers:
 
@@ -51,6 +60,7 @@ BluStream compares installed alpha build numbers so the same release is not offe
 - Minimum Android version: Android 8.0
 - AndroidX Media3 ExoPlayer playback
 - Coil image loading for cinematic artwork and poster cards
+- Real movie and series metadata through Cinemeta
 - ARM, ARM64, x86 and x86_64 native P2P support
 - GitHub Actions APK builds
 - GitHub Releases distribution
@@ -64,7 +74,7 @@ BluStream compares installed alpha build numbers so the same release is not offe
 
 ## Add-ons and sources
 
-- Stremio-compatible HTTPS manifests
+- Stremio-compatible HTTP and HTTPS manifests
 - Install and remove compatible add-ons
 - Direct HTTP and HTTPS stream playback
 - External URI handling
@@ -93,4 +103,4 @@ BluStream compares installed alpha build numbers so the same release is not offe
 
 0.5 added the native P2P engine and progressive torrent playback.
 
-0.6 adds the cinematic BluStream interface, Android / iOS / TV branding and built-in GitHub update checks.
+0.6 adds the cinematic BluStream interface, drawer navigation, editable profiles, real catalog metadata, Android / iOS / TV branding and built-in GitHub update checks.
