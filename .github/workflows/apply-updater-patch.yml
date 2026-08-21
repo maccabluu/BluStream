@@ -1,0 +1,154 @@
+name: Apply BluStream updater UI patch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-updater-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Patch MainActivity updater hooks
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path('app/src/main/java/com/blustream/app/MainActivity.kt')
+          text = path.read_text()
+
+          old_oncreate = '''        super.onCreate(savedInstanceState)
+                  setContent { BluStreamApp() }'''
+          new_oncreate = '''        super.onCreate(savedInstanceState)
+                  UpdateManager.check(this, manual = false)
+                  setContent { BluStreamApp() }'''
+          if old_oncreate not in text:
+              raise SystemExit('onCreate target not found')
+          text = text.replace(old_oncreate, new_oncreate, 1)
+
+          old_settings = '''@Composable
+          private fun SettingsScreen(profile: String, onProfile: () -> Unit) {
+              Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 18.dp)) {
+                  Header(profile, onProfile)
+                  Text("Settings", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                  Spacer(Modifier.height(18.dp))
+                  SettingsCard("Playback", "Autoplay next episode • Quality • Player")
+                  SettingsCard("Language", "Audio and subtitle preferences")
+                  SettingsCard("Profiles", "Manage profiles and viewing history")
+                  SettingsCard("Add-ons", "Installed sources and catalogues")
+                  SettingsCard("P2P", "Peer playback settings")
+                  SettingsCard("About", "BluStream 0.6 Alpha")
+                  Spacer(Modifier.height(24.dp))
+              }
+          }
+
+          @Composable
+          private fun SettingsCard(title: String, subtitle: String) {
+              Card(
+                  modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
+                  colors = CardDefaults.cardColors(containerColor = Color(0xFF0D2138)),
+                  shape = RoundedCornerShape(14.dp)
+              ) {
+                  Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                      Column {
+                          Text(title, color = Color.White, fontWeight = FontWeight.Bold)
+                          Text(subtitle, color = Color(0xFFB7C9DC), fontSize = 12.sp)
+                      }
+                      Text("›", color = Color(0xFF8EC5FF), fontSize = 24.sp)
+                  }
+              }
+          }'''
+
+          new_settings = '''@Composable
+          private fun SettingsScreen(profile: String, onProfile: () -> Unit) {
+              val context = LocalContext.current
+              var appSettings by remember { mutableStateOf(false) }
+
+              Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 18.dp)) {
+                  Header(profile, onProfile)
+
+                  if (appSettings) {
+                      Text("‹ Settings", Modifier.clickable { appSettings = false }, color = Color(0xFF8EC5FF), fontSize = 16.sp)
+                      Spacer(Modifier.height(8.dp))
+                      Text("App", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                      Spacer(Modifier.height(8.dp))
+                      Text("BluStream checks the official GitHub Releases feed after launch. Automatic checks use a 15-minute cooldown.", color = Color(0xFFB7C9DC), fontSize = 13.sp)
+                      Spacer(Modifier.height(18.dp))
+                      SettingsActionCard(
+                          title = "Check for updates",
+                          subtitle = "Run a manual update check now"
+                      ) { UpdateManager.check(context as Activity, manual = true) }
+                      SettingsCard("Update source", "Official maccabluu/BluStream GitHub Releases")
+                      SettingsCard("Channel", "Canonical alpha releases")
+                  } else {
+                      Text("Settings", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                      Spacer(Modifier.height(18.dp))
+                      SettingsActionCard("App", "Updates and BluStream version") { appSettings = true }
+                      SettingsCard("Playback", "Autoplay next episode • Quality • Player")
+                      SettingsCard("Language", "Audio and subtitle preferences")
+                      SettingsCard("Profiles", "Manage profiles and viewing history")
+                      SettingsCard("Add-ons", "Installed sources and catalogues")
+                      SettingsCard("P2P", "Peer playback settings")
+                      SettingsCard("About", "BluStream 0.6 Alpha")
+                  }
+                  Spacer(Modifier.height(24.dp))
+              }
+          }
+
+          @Composable
+          private fun SettingsCard(title: String, subtitle: String) {
+              Card(
+                  modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
+                  colors = CardDefaults.cardColors(containerColor = Color(0xFF0D2138)),
+                  shape = RoundedCornerShape(14.dp)
+              ) {
+                  Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                      Column {
+                          Text(title, color = Color.White, fontWeight = FontWeight.Bold)
+                          Text(subtitle, color = Color(0xFFB7C9DC), fontSize = 12.sp)
+                      }
+                      Text("›", color = Color(0xFF8EC5FF), fontSize = 24.sp)
+                  }
+              }
+          }
+
+          @Composable
+          private fun SettingsActionCard(title: String, subtitle: String, onClick: () -> Unit) {
+              Card(
+                  modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp).clickable { onClick() },
+                  colors = CardDefaults.cardColors(containerColor = Color(0xFF0D2138)),
+                  shape = RoundedCornerShape(14.dp)
+              ) {
+                  Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                      Column {
+                          Text(title, color = Color.White, fontWeight = FontWeight.Bold)
+                          Text(subtitle, color = Color(0xFFB7C9DC), fontSize = 12.sp)
+                      }
+                      Text("›", color = Color(0xFF8EC5FF), fontSize = 24.sp)
+                  }
+              }
+          }'''
+
+          if old_settings not in text:
+              raise SystemExit('settings target not found')
+          text = text.replace(old_settings, new_settings, 1)
+
+          if 'import android.app.Activity' not in text:
+              text = text.replace('import android.content.Intent\n', 'import android.app.Activity\nimport android.content.Intent\n', 1)
+
+          path.write_text(text)
+          PY
+
+      - name: Commit updater UI patch
+        run: |
+          git config user.name "BluStream Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add app/src/main/java/com/blustream/app/MainActivity.kt
+          git commit -m "Add built-in update checks to BluStream settings"
+          git push
