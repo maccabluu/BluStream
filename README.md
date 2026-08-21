@@ -4,7 +4,7 @@ BluStream is an Android / iOS / TV streaming app.
 
 ## Current status
 
-BluStream 0.7 Alpha is the current Android development version. Android builds are produced through GitHub Actions. The Android source picker build error has been repaired and the workflow is back to the normal release pipeline. The iOS project remains available for Xcode testing.
+BluStream 0.7 Alpha is the current Android development version. Android builds are produced through GitHub Actions. The Android source picker build error has been repaired. The iOS project remains available for Xcode testing.
 
 ## New in 0.7
 
@@ -31,10 +31,14 @@ BluStream 0.7 Alpha is the current Android development version. Android builds a
 - Source picker lists available compatible streams
 - Episode selection feeds directly into source lookup
 - Built-in Media3 player opens from the title page
+- Emulator artwork compatibility fix for BlueStacks
+- Stable BluStream alpha APK signing for future in-app updates
 
 ## Home and browsing
 
 BluStream uses real movie and show metadata for browsing. The home screen includes cinematic artwork, popular movie rows, popular show rows and title detail pages.
+
+Artwork requests disable Android hardware bitmaps to improve compatibility with emulators and devices that show corrupted poster textures.
 
 ## Add-ons and playback
 
@@ -54,6 +58,8 @@ BluStream checks the official GitHub Releases feed after launch. Automatic check
 
 When a newer canonical alpha release is available, BluStream offers Update now, What's new and Later.
 
+Android alpha APKs now use one stable development signing identity. Builds installed from the new signing pipeline will update over later BluStream alpha builds without a package-signature conflict.
+
 ## Android
 
 - Minimum Android version: Android 8.0
@@ -62,6 +68,7 @@ When a newer canonical alpha release is available, BluStream offers Update now, 
 - ARM, ARM64, x86 and x86_64 P2P libraries
 - GitHub Actions builds
 - GitHub Releases distribution
+- Stable alpha signing pipeline
 
 ## iOS
 
