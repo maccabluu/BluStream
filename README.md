@@ -1,64 +1,87 @@
-# BluStream 0.7 Alpha
+# BluStream 2.0 Alpha
 
-BluStream is an Android / iOS / TV streaming app.
+BluStream is an Android, iOS and TV streaming app project.
 
 ## Current status
 
-BluStream 0.7 Alpha is the current Android development version. Android builds are produced through GitHub Actions. The Android source picker build error has been repaired. The iOS project remains available for Xcode testing.
+BluStream 2.0 Alpha is the current Android development version. Android builds are produced through GitHub Actions. The iOS project remains available for Xcode testing and further feature parity work.
 
-## New in 0.7
+## New in 2.0 Alpha
 
-- Bottom navigation removed
-- Main navigation moved into the top-left burger menu
-- Movies screen
-- Shows screen
-- Native movie and show search
-- Search history saved separately for each profile
-- Genres screen with movie and show filters
-- My Stuff saved separately for each profile
-- Real title metadata and artwork through Cinemeta
-- Series detail pages with season and episode lists
-- Runtime, cast and genre metadata where available
-- Expanded Who's Watching profile manager
-- Edit profile names
-- Edit avatar letters
-- Change profile theme colours
-- Kids profile toggle
-- Add up to 5 profiles
-- Remove profiles
-- Inline source lookup from movie and show detail pages
-- Large Play button appears after compatible sources are found
-- Source picker lists available compatible streams
-- Episode selection feeds directly into source lookup
-- Built-in Media3 player opens from the title page
-- Emulator artwork compatibility fix for BlueStacks
-- Stable BluStream alpha APK signing for future in-app updates
+- Working See All navigation from home rows
+- Face-style avatars for profiles
+- Automatic profile selection when only one profile exists
+- Kids profiles filter home, movies, shows, search and genres toward family and animation content
+- Add-ons stored separately for each profile
+- Safer add-on installation with duplicate protection and manifest validation
+- Add-on refresh checks
+- Stremio-compatible add-on support
+- Real movie and show metadata and artwork
+- Movie and series detail pages
+- Seasons and episodes
+- Source finder and built-in Media3 playback
+- Stable BluStream alpha APK signing
+- Built-in GitHub update checks
 
-## Home and browsing
+## Supported device targets
 
-BluStream uses real movie and show metadata for browsing. The home screen includes cinematic artwork, popular movie rows, popular show rows and title detail pages.
+- Android phones, Android 8.0+
+- Android TV 11+ on ARM devices
+- NVIDIA Shield
+- onn 4K Streaming Box
+- iPhone and iPad through the native iOS project
 
-Artwork requests disable Android hardware bitmaps to improve compatibility with emulators and devices that show corrupted poster textures.
+## Privacy
 
-## Add-ons and playback
+BluStream does not require a BluStream account, registration or a sign-up wall. Local profiles and preferences remain on the device by default.
 
-- Stremio-compatible add-on manager
-- HTTP and HTTPS manifest support
-- Detail pages search installed add-ons for compatible sources
+Third-party add-ons and metadata providers have their own privacy policies and network behaviour.
+
+## Metadata
+
+BluStream includes built-in metadata browsing through its current metadata provider. The project also supports Stremio-compatible add-ons for compatible metadata and stream sources.
+
+## Add-ons
+
+- Stremio-compatible manifests
+- HTTP and HTTPS manifest URLs
+- Per-profile installed add-ons
+- Directory browsing
+- Duplicate protection
+- Refresh checks
 - Direct HTTP and HTTPS playback
-- External URI handling
-- YouTube source handling
+- External URI and YouTube source handling
 - Torrent and magnet source handling
 - Native P2P engine through jlibtorrent
-- Media3 ExoPlayer playback with standard player controls
+
+BluStream 2.0 Alpha is also being prepared for broader lawful HTTP provider adapters. Provider-specific compatibility depends on the provider format and permissions.
+
+## Profiles
+
+BluStream supports multiple local profiles with editable names, face avatars, Kids mode, separate My Stuff data and separate installed add-ons.
+
+When only one profile exists, BluStream skips the Who's Watching screen automatically. Profile management remains available from the menu.
+
+## Kids profiles
+
+Kids profiles restrict BluStream browsing toward titles tagged with Family, Animation, Kids or Children metadata. Search and genre browsing follow the same profile filter.
+
+## Planned during the 2.0 alpha cycle
+
+- Per-profile watch history and playback progress
+- Watchlists with save-from-search support
+- Similar titles on detail pages
+- Preferred audio and subtitle language per profile
+- Autoplay and next episode
+- Catalog show, hide and reorder controls
+- Browser-based configurator
+- Optional multi-device sync for Android TV, Android phone and iOS
 
 ## Built-in updates
 
 BluStream checks the official GitHub Releases feed after launch. Automatic checks use a 15-minute cooldown. Settings includes a manual Check for updates action.
 
-When a newer canonical alpha release is available, BluStream offers Update now, What's new and Later.
-
-Android alpha APKs now use one stable development signing identity. Builds installed from the new signing pipeline will update over later BluStream alpha builds without a package-signature conflict.
+When a newer alpha release is available, BluStream offers Update now, What's new and Later.
 
 ## Android
 
