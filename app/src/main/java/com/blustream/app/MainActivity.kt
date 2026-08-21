@@ -1,5 +1,6 @@
 package com.blustream.app
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -32,6 +33,7 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        UpdateManager.check(this, manual = false)
         setContent { BluStreamApp() }
     }
 }
@@ -384,16 +386,36 @@ private fun MyListScreen(profile: String, onProfile: () -> Unit, onSelect: (Medi
 
 @Composable
 private fun SettingsScreen(profile: String, onProfile: () -> Unit) {
+    val context = LocalContext.current
+    var appSettings by remember { mutableStateOf(false) }
+
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 18.dp)) {
         Header(profile, onProfile)
-        Text("Settings", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(18.dp))
-        SettingsCard("Playback", "Autoplay next episode • Quality • Player")
-        SettingsCard("Language", "Audio and subtitle preferences")
-        SettingsCard("Profiles", "Manage profiles and viewing history")
-        SettingsCard("Add-ons", "Installed sources and catalogues")
-        SettingsCard("P2P", "Peer playback settings")
-        SettingsCard("About", "BluStream 0.6 Alpha")
+
+        if (appSettings) {
+            Text("‹ Settings", Modifier.clickable { appSettings = false }, color = Color(0xFF8EC5FF), fontSize = 16.sp)
+            Spacer(Modifier.height(8.dp))
+            Text("App", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(8.dp))
+            Text("BluStream checks the official GitHub Releases feed after launch. Automatic checks use a 15-minute cooldown.", color = Color(0xFFB7C9DC), fontSize = 13.sp)
+            Spacer(Modifier.height(18.dp))
+            SettingsActionCard(
+                title = "Check for updates",
+                subtitle = "Run a manual update check now"
+            ) { UpdateManager.check(context as Activity, manual = true) }
+            SettingsCard("Update source", "Official maccabluu/BluStream GitHub Releases")
+            SettingsCard("Channel", "Canonical alpha releases")
+        } else {
+            Text("Settings", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(18.dp))
+            SettingsActionCard("App", "Updates and BluStream version") { appSettings = true }
+            SettingsCard("Playback", "Autoplay next episode • Quality • Player")
+            SettingsCard("Language", "Audio and subtitle preferences")
+            SettingsCard("Profiles", "Manage profiles and viewing history")
+            SettingsCard("Add-ons", "Installed sources and catalogues")
+            SettingsCard("P2P", "Peer playback settings")
+            SettingsCard("About", "BluStream 0.6 Alpha")
+        }
         Spacer(Modifier.height(24.dp))
     }
 }
@@ -402,6 +424,23 @@ private fun SettingsScreen(profile: String, onProfile: () -> Unit) {
 private fun SettingsCard(title: String, subtitle: String) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF0D2138)),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Column {
+                Text(title, color = Color.White, fontWeight = FontWeight.Bold)
+                Text(subtitle, color = Color(0xFFB7C9DC), fontSize = 12.sp)
+            }
+            Text("›", color = Color(0xFF8EC5FF), fontSize = 24.sp)
+        }
+    }
+}
+
+@Composable
+private fun SettingsActionCard(title: String, subtitle: String, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp).clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = Color(0xFF0D2138)),
         shape = RoundedCornerShape(14.dp)
     ) {
