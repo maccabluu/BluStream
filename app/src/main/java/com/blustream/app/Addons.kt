@@ -77,12 +77,14 @@ private fun BluStreamSource.fastRank(): Int = when (kind) {
     BluSourceKind.DIRECT -> if (url?.startsWith("https://", true) == true) 0 else 1
     BluSourceKind.EXTERNAL -> 2
     BluSourceKind.YOUTUBE -> 3
-    BluSourceKind.TORRENT -> 10
     else -> 20
 }
 
 private fun preferFastStreams(streams: List<BluStreamSource>): List<BluStreamSource> =
-    streams.distinctBy { it.stableKey }.sortedBy { it.fastRank() }
+    streams
+        .filter { it.kind == BluSourceKind.DIRECT || it.kind == BluSourceKind.EXTERNAL || it.kind == BluSourceKind.YOUTUBE }
+        .distinctBy { it.stableKey }
+        .sortedBy { it.fastRank() }
 
 internal object AddonPrefs {
     private fun key(profileId: String) = "installed_manifest_urls_${profileId.ifBlank { "default" }}"
@@ -158,7 +160,7 @@ internal object StremioAddonClient {
             c.connectTimeout = 10_000
             c.readTimeout = 15_000
             c.setRequestProperty("Accept", "application/json")
-            c.setRequestProperty("User-Agent", "BluStream/2.x")
+            c.setRequestProperty("User-Agent", "BluStream/3.x")
             val code = c.responseCode
             if (code !in 200..299) error("Server returned HTTP $code")
             c.inputStream.bufferedReader().use { it.readText() }
@@ -212,8 +214,8 @@ fun AddonsScreen(profileId: String, profileName: String, onProfile: () -> Unit, 
             HorizontalDivider(); Text("Find streams", color = Color.White, fontSize = 20.sp)
             Row { FilterChip(contentType == "movie", { contentType = "movie" }, { Text("Movie") }); Spacer(Modifier.width(8.dp)); FilterChip(contentType == "series", { contentType = "series" }, { Text("Series") }) }
             OutlinedTextField(mediaId, { mediaId = it }, Modifier.fillMaxWidth(), label = { Text("Media ID") })
-            Button(enabled = selectedManifest != null && mediaId.isNotBlank() && !loading, onClick = { val manifest = selectedManifest ?: return@Button; scope.launch { loading = true; runCatching { StremioAddonClient.resolveStreams(manifest, contentType, mediaId) }.onSuccess { sources = it; message = "Found ${it.size} source(s). Fast direct streams appear first." }.onFailure { message = it.message ?: "Lookup failed" }; loading = false } }) { Text("Find streams") }
+            Button(enabled = selectedManifest != null && mediaId.isNotBlank() && !loading, onClick = { val manifest = selectedManifest ?: return@Button; scope.launch { loading = true; runCatching { StremioAddonClient.resolveStreams(manifest, contentType, mediaId) }.onSuccess { sources = it; message = if (it.isEmpty()) "No direct stream was returned by this add-on." else "Found ${it.size} fast direct source(s)." }.onFailure { message = it.message ?: "Lookup failed" }; loading = false } }) { Text("Find streams") }
         }
-        items(sources) { source -> Card(Modifier.fillMaxWidth().clickable { onPlaySource(source) }) { Column(Modifier.padding(14.dp)) { Text(source.name); Text(if (source.kind == BluSourceKind.DIRECT) "FAST DIRECT" else source.kind.name) } } }
+        items(sources) { source -> Card(Modifier.fillMaxWidth().clickable { onPlaySource(source) }) { Column(Modifier.padding(14.dp)) { Text(source.name); Text("FAST DIRECT") } } }
     }
 }
