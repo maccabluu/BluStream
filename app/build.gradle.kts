@@ -15,7 +15,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 2000000 + alphaBuild
-        versionName = "2.0.0-alpha.$alphaBuild"
+        versionName = "2.0"
     }
 
     compileOptions {
