@@ -1,26 +1,27 @@
-# BluStream 2.5 Alpha
+# BluStream 3.2 Alpha
 
 BluStream is an Android, iOS and TV streaming app project.
 
 ## Current status
 
-BluStream 2.5 Alpha is the current Android development version. Android builds are produced through GitHub Actions. The iOS project remains available for Xcode testing and further feature parity work.
+BluStream 3.2 Alpha is the current Android development version. Android builds are produced through GitHub Actions. The iOS project remains available for Xcode testing and further feature parity work.
 
-## New in 2.5 Alpha
+## New in 3.2 Alpha
 
-- Who's Watching now appears first every time BluStream launches
-- New BLU STREAM branding with the STREAM ANYTHING tagline on the profile gate
-- Fast direct HTTPS streams are prioritised before HTTP, external, YouTube and P2P sources
-- Direct sources are labelled FAST DIRECT
-- The main Play action selects the fastest available source first
-- P2P remains available as a fallback when no faster direct source exists
+- HTTPS direct streams are preferred first for faster playback startup
+- HTTP direct streams are second
+- Hosted and external streams follow
+- YouTube-compatible sources follow
+- P2P torrent sources remain available as a fallback only
+- Source cards identify FAST HTTPS DIRECT, DIRECT HTTP and P2P FALLBACK
+- The main Play action uses the first ranked source, so direct HTTPS wins when available
+- Genres is back in the burger menu
+- Movie and TV genre browsing is available
+- Kids profiles receive a reduced family-friendly genre list
+- Who's Watching remains the first screen on launch
+- BLU STREAM branding with the STREAM ANYTHING tagline remains enabled
 - TV seasons and episodes remain available from show detail pages
-- Movie and TV source Play buttons remain on title pages
-- On-screen status and error messages dismiss automatically after 10 seconds
 - Built-in update checker remains inside Settings > App
-- Kids profiles continue filtering browsing toward family and animation content
-- Stable BluStream APK signing
-- BlueStacks artwork compatibility loading
 
 ## Supported device targets
 
@@ -40,7 +41,7 @@ Third-party add-ons and metadata providers have their own privacy policies and n
 
 BluStream includes built-in metadata browsing through its current metadata provider. The project also supports Stremio-compatible add-ons for compatible metadata and stream sources.
 
-## Add-ons
+## Add-ons and playback
 
 - Stremio-compatible manifests
 - HTTP and HTTPS manifest URLs
@@ -49,21 +50,26 @@ BluStream includes built-in metadata browsing through its current metadata provi
 - Duplicate protection
 - Refresh checks
 - Direct HTTP and HTTPS playback
-- Fast direct source prioritisation
+- HTTPS direct source prioritisation
 - External URI and YouTube source handling
 - Torrent and magnet fallback handling
-- Torrent file-index and tracker-hint parsing
 - Native P2P fallback engine through jlibtorrent
+
+BluStream does not remove P2P sources. It ranks faster direct HTTPS sources above them when an add-on supplies both.
 
 ## Profiles
 
 BluStream supports multiple local profiles with editable names, face avatars, Kids mode and separate installed add-ons.
 
-Who's Watching now appears before the main BluStream interface on every app launch. The chosen profile is saved as the active profile for the main app session.
+Who's Watching appears before the main BluStream interface on app launch. The chosen profile is saved as the active profile for the main app session.
 
 ## Kids profiles
 
-Kids profiles restrict BluStream browsing toward Family and Animation metadata. Search follows the same profile filter.
+Kids profiles restrict BluStream browsing toward Family and Animation metadata. Search and Genres follow the same profile filter.
+
+## Genres
+
+Genres is available from the burger menu. Standard profiles receive movie and TV genre browsing. Kids profiles receive a smaller family-focused genre list.
 
 ## Built-in updates
 
@@ -77,7 +83,7 @@ Update now downloads the APK inside BluStream and opens Android's package instal
 
 ## Android
 
-- Current Android alpha: 2.5
+- Current Android alpha: 3.2
 - Minimum Android version: Android 8.0
 - AndroidX Media3
 - Coil artwork loading with BlueStacks compatibility
@@ -95,13 +101,12 @@ Update now downloads the APK inside BluStream and opens Android's package instal
 
 ## Release numbering
 
-BluStream releases follow simple version numbers:
-
-2.0 → 2.1 → 2.2 → 2.3 → 2.4 → 2.5 → 3.0
+BluStream releases use simple version numbers such as 3.0, 3.1, 3.2, 3.3 and 4.0.
 
 ## Planned
 
 - Faster local metadata and artwork caching
+- Improved player buffering and playback error feedback
 - Per-profile watch history and playback progress
 - Watchlists with save-from-search support
 - Similar titles on detail pages
