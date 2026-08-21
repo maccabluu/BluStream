@@ -28,6 +28,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Wire Genres tab into main UI
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/src/main/java/com/blustream/app/BluStreamV20Activity.kt')
+          s = p.read_text()
+          s = s.replace(
+              'private enum class V20Screen { HOME, MOVIES, SHOWS, SEARCH, MY_STUFF, ADDONS, PROFILES, SETTINGS }',
+              'private enum class V20Screen { HOME, MOVIES, SHOWS, GENRES, SEARCH, MY_STUFF, ADDONS, PROFILES, SETTINGS }'
+          )
+          s = s.replace(
+              'V20Screen.SHOWS -> V20Catalog("Shows", active!!, "series") { selected = it }\n                    V20Screen.SEARCH ->',
+              'V20Screen.SHOWS -> V20Catalog("Shows", active!!, "series") { selected = it }\n                    V20Screen.GENRES -> BluStreamGenres(active!!.kids) { selected = it }\n                    V20Screen.SEARCH ->'
+          )
+          s = s.replace(
+              'V20Screen.SHOWS to "Shows",\n                V20Screen.SEARCH to "Search",',
+              'V20Screen.SHOWS to "Shows",\n                V20Screen.GENRES to "Genres",\n                V20Screen.SEARCH to "Search",'
+          )
+          s = s.replace('Text("BLUSTREAM 2.5"', 'Text("BLUSTREAM 3.1"')
+          p.write_text(s)
+          PY
+
       - name: Set up Java 17
         uses: actions/setup-java@v5
         with:
