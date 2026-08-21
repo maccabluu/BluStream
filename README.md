@@ -1,62 +1,90 @@
-# BluStream 0.5.0 Alpha
+# BluStream 0.6 Alpha
 
-BluStream is an Android/IOS/TV streaming app 
+BluStream is an Android / iOS / TV streaming app.
 
-## Added in 0.2
+## Current status
 
-- Profiles: Macca, Guest, and Kids
-- Movie and TV series detail pages
-- Season 1 episode list demo
-- Saved favourites using Android SharedPreferences
-- Saved playback position for movies and episodes
-- Continue Watching foundation
-- Focusable cards and buttons for Android TV / controller navigation
-- Updated streaming-style home screen
-- Search across movie and show titles
+BluStream 0.6 Alpha is the current development branch. Android builds are published through GitHub Actions and GitHub Releases. The iOS project is included for Xcode testing.
+
+## Added in 0.6
+
+- New streaming-style BluStream interface inspired by modern TV apps
+- Who's Watching profile screen
+- Home screen with featured content
+- Continue Watching rows
+- Trending and Popular rows
+- Discover screen
+- Search screen
+- My List screen
+- Add-ons screen
+- Settings screen
+- Movie and series detail screen
+- Direct playback through AndroidX Media3
+- Existing P2P source handling
+- Existing Stremio-compatible add-on handling
+- New BluStream blue B play icon for the Android launcher
+- BluStream branding prepared for Android, iOS and TV
+
+## Built-in updates
+
+BluStream checks the official GitHub Releases feed after launch.
+
+Automatic update checks use a 15-minute cooldown.
+
+Settings > App > Check for updates runs a manual check immediately.
+
+When a newer canonical alpha is available, BluStream offers:
+
+- Update now, download the APK through BluStream and open Android's install confirmation
+- What's new, read the release notes
+- Later, continue using the current version
+
+BluStream compares installed alpha build numbers so the same release is not offered repeatedly.
+
+## Android
+
+- Minimum Android version: Android 8.0
 - AndroidX Media3 ExoPlayer playback
+- ARM, ARM64, x86 and x86_64 native P2P support
+- GitHub Actions APK builds
+- GitHub Releases distribution
 
-## Test content
+## iOS
 
-The project uses public Google sample videos only. Replace them with media you own or have permission to distribute.
+- Native SwiftUI project
+- AVPlayer playback foundation
+- iPhone and iPad project support
+- Xcode build workflow included
 
-## Build
+## Add-ons and sources
 
-Open the BluStream folder in Android Studio, allow Gradle sync, then run the app on an Android device or emulator. Minimum Android version is Android 8.0.
-
-## 0.3 Alpha branding update
-- Added the new BluStream B app launcher icon.
-- Added the BluStream logo artwork to app resources as `drawable/blustream_logo.png`.
-- Added standard Android launcher icon density sizes.
-
-
-## Added in 0.4
-
-- Add-ons tab for Stremio-compatible HTTPS manifests
-- Browse approved add-on metadata from stremio-addons.net public API
+- Stremio-compatible HTTPS manifests
 - Install and remove compatible add-ons
-- Resolve direct HTTPS stream resources for supported media IDs
-- Play supported direct streams with Media3
-- Parse direct URLs, external URLs, YouTube IDs, torrent info hashes, file indexes, tracker hints, NZB and archive-style stream descriptors
-- Direct HTTP/HTTPS video URLs play through Media3
-- External, YouTube and other URI-based sources stay visible
-- Torrent and magnet sources now use BluStream’s built-in P2P engine
-- No keyword-based add-on or source blocking
-- Directory attribution shown inside the app
+- Direct HTTP and HTTPS stream playback
+- External URI handling
+- YouTube source handling
+- Torrent and magnet source handling through BluStream's P2P engine
+- File-index and tracker-hint parsing
 
-BluStream is intended for legal, licensed, public-domain, and user-authorized media sources.
+## P2P
 
-
-## Added in 0.5 P2P
-
-- Native BitTorrent engine using FrostWire jlibtorrent and libtorrent
-- Android ARM, ARM64, x86 and x86_64 native support
-- Magnet and info-hash source support
-- Torrent metadata fetching inside BluStream
-- Selected-file priority support using Stremio `fileIdx`
-- Automatic largest-video selection when no file index is supplied
-- Localhost HTTP byte-range bridge for AndroidX Media3
+- FrostWire jlibtorrent and libtorrent engine
+- Torrent metadata fetching
+- Selected-file priority support
+- Largest-video selection when no file index is supplied
+- Localhost HTTP byte-range bridge for Media3
 - Progressive playback while pieces arrive
-- Seeking waits for the required verified torrent pieces
-- P2P connection status shown in the BluStream interface
+- Seek support based on verified torrent pieces
+- P2P connection status inside BluStream
 
-Use P2P streaming only for media you are authorised to access or distribute.
+## Development history
+
+0.2 added profiles, detail pages, favourites, playback position, Continue Watching foundations, Android TV focus support and Media3 playback.
+
+0.3 added BluStream launcher branding and logo resources.
+
+0.4 added Stremio-compatible add-ons, source parsing and direct playback.
+
+0.5 added the native P2P engine and progressive torrent playback.
+
+0.6 adds the redesigned BluStream interface, Android / iOS / TV branding and built-in GitHub update checks.
