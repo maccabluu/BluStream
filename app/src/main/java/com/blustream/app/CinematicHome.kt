@@ -27,18 +27,20 @@ private data class PosterItem(
 )
 
 private val cinematicContinue = listOf(
-    PosterItem(continueWatching[0], "https://picsum.photos/id/1011/600/900", 0.62f),
-    PosterItem(continueWatching[1], "https://picsum.photos/id/1005/600/900", 0.34f),
-    PosterItem(continueWatching[2], "https://picsum.photos/id/1027/600/900", 0.78f)
+    PosterItem(MediaCard("Harbour City", "42 min left", Color(0xFF385D73)), "https://picsum.photos/id/1011/600/900", 0.62f),
+    PosterItem(MediaCard("Red Line", "Episode 4", Color(0xFF713B3B)), "https://picsum.photos/id/1005/600/900", 0.34f),
+    PosterItem(MediaCard("Glass House", "18 min left", Color(0xFF4E476F)), "https://picsum.photos/id/1027/600/900", 0.78f)
 )
 
 private val cinematicTrending = listOf(
-    PosterItem(trending[0], "https://picsum.photos/id/1015/600/900"),
-    PosterItem(trending[1], "https://picsum.photos/id/1040/600/900"),
-    PosterItem(trending[2], "https://picsum.photos/id/1039/600/900"),
-    PosterItem(trending[3], "https://picsum.photos/id/1025/600/900"),
-    PosterItem(trending[4], "https://picsum.photos/id/1016/600/900")
+    PosterItem(MediaCard("Night Signal", "Movie • 2026", Color(0xFF294B7A)), "https://picsum.photos/id/1015/600/900"),
+    PosterItem(MediaCard("Northbound", "Series • S1", Color(0xFF405A3B)), "https://picsum.photos/id/1040/600/900"),
+    PosterItem(MediaCard("After Dark", "Movie • 2025", Color(0xFF6B3443)), "https://picsum.photos/id/1039/600/900"),
+    PosterItem(MediaCard("The Crossing", "Series • S2", Color(0xFF57456D)), "https://picsum.photos/id/1025/600/900"),
+    PosterItem(MediaCard("Orbit", "Movie • 2026", Color(0xFF314E5C)), "https://picsum.photos/id/1016/600/900")
 )
+
+private val cinematicHero = MediaCard("Night Signal", "Movie • 2026", Color(0xFF294B7A))
 
 @Composable
 fun CinematicHomeScreen(
@@ -97,7 +99,7 @@ private fun CinematicTopBar(profile: String, onProfile: () -> Unit) {
 
 @Composable
 private fun CinematicHero(onSelect: (MediaCard) -> Unit) {
-    val hero = trending.first()
+    val hero = cinematicHero
     Box(
         Modifier
             .fillMaxWidth()
@@ -173,18 +175,14 @@ private fun PosterRail(
         Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 18.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        items.forEach { item ->
-            PosterCard(item, onSelect)
-        }
+        items.forEach { item -> PosterCard(item, onSelect) }
     }
 }
 
 @Composable
 private fun PosterCard(item: PosterItem, onSelect: (MediaCard) -> Unit) {
     Card(
-        modifier = Modifier
-            .width(145.dp)
-            .clickable { onSelect(item.media) },
+        modifier = Modifier.width(145.dp).clickable { onSelect(item.media) },
         colors = CardDefaults.cardColors(containerColor = Color(0xFF071624)),
         shape = RoundedCornerShape(10.dp)
     ) {
@@ -201,9 +199,7 @@ private fun PosterCard(item: PosterItem, onSelect: (MediaCard) -> Unit) {
                     shape = RoundedCornerShape(30.dp),
                     color = Color(0x88000000)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text("▶", color = Color.White, fontSize = 16.sp)
-                    }
+                    Box(contentAlignment = Alignment.Center) { Text("▶", color = Color.White, fontSize = 16.sp) }
                 }
             }
             Column(Modifier.padding(9.dp)) {
