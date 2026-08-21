@@ -1,25 +1,25 @@
-# BluStream 2.3 Alpha
+# BluStream 2.4 Alpha
 
 BluStream is an Android, iOS and TV streaming app project.
 
 ## Current status
 
-BluStream 2.3 Alpha is the current Android development version. Android builds are produced through GitHub Actions. The iOS project remains available for Xcode testing and further feature parity work.
+BluStream 2.4 Alpha is the current Android development version. Android builds are produced through GitHub Actions. The iOS project remains available for Xcode testing and further feature parity work.
 
-## New in 2.3 Alpha
+## New in 2.4 Alpha
 
-- TV show detail pages now load seasons and episodes from built-in metadata
-- Season selector added to series pages
-- Episodes show title, episode number, thumbnail and summary where available
-- Selecting an episode clears old sources and searches specifically for that episode
-- A large Play button appears after compatible sources are found
-- Every source card still has its own Play button
-- Torrent and magnet sources start the built-in P2P engine directly
+- Torrent source parsing now keeps Stremio file indexes and tracker hints
+- BluStream adds fallback public trackers when a torrent source does not provide enough tracker data
+- P2P metadata lookup retries before reporting a failure
+- P2P errors now use a shorter, clearer message when a source has no reachable metadata
+- On-screen status and error messages dismiss automatically after 10 seconds
+- Movie and TV source Play buttons remain on the title page
+- TV seasons and episodes remain available from show detail pages
+- Selected episodes search their own stream ID rather than the whole series ID
 - Home button remains on title detail pages
-- Proper face-style profile avatars remain enabled
 - Built-in update checker remains inside Settings > App
+- Proper face-style profile avatars remain enabled
 - Kids profiles continue filtering browsing toward family and animation content
-- Real movie and show metadata and artwork
 - Stable BluStream APK signing
 - BlueStacks artwork compatibility loading
 
@@ -52,6 +52,7 @@ BluStream includes built-in metadata browsing through its current metadata provi
 - Direct HTTP and HTTPS playback
 - External URI and YouTube source handling
 - Torrent and magnet source handling
+- Torrent file-index and tracker-hint parsing
 - Native P2P engine through jlibtorrent
 
 ## Profiles
@@ -76,7 +77,7 @@ Update now downloads the APK inside BluStream and opens Android's package instal
 
 ## Android
 
-- Current Android alpha: 2.3
+- Current Android alpha: 2.4
 - Minimum Android version: Android 8.0
 - AndroidX Media3
 - Coil artwork loading with BlueStacks compatibility
