@@ -24,21 +24,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Apply source picker syntax hotfix
+      - name: Apply source picker build hotfix
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           path = Path('app/src/main/java/com/blustream/app/BluStreamShell.kt')
           text = path.read_text()
+
           old = 'Text("▶ Play ${chosenEpisode?.let { "S${it.season} E${it.episode}" } ?: resolved.name}", fontSize = 17.sp)'
           new = 'val playLabel = chosenEpisode?.let { episode -> "S${episode.season} E${episode.episode}" } ?: resolved.name\n                    Text("▶ Play $playLabel", fontSize = 17.sp)'
           if old in text:
               text = text.replace(old, new)
-              path.write_text(text)
-              print('Applied source picker syntax hotfix')
-          else:
-              print('Source picker line already changed or not found')
+
+          marker = '\n@Composable\nprivate fun ProfilePickerV07'
+          repair_marker = '\n}\n\n@Composable\nprivate fun ProfilePickerV07'
+          if marker in text and repair_marker not in text:
+              text = text.replace(marker, '\n}\n' + marker, 1)
+
+          path.write_text(text)
           PY
 
       - name: Set up Java 17
@@ -72,7 +76,7 @@ jobs:
               echo "BluStream Android build failed on commit $GITHUB_SHA"
               echo
               echo '```text'
-              grep -E "(^e: | error: |Unresolved reference|Cannot access|Type mismatch|No value passed|Too many arguments|FAILURE:|What went wrong|Compilation error)" build.log | tail -n 140
+              grep -E "(^e: | error: |Unresolved reference|Cannot access|Type mismatch|No value passed|Too many arguments|FAILURE:|What went wrong|Compilation error|Syntax error)" build.log | tail -n 160
               echo '```'
             } > build-error.md
             exit "$STATUS"
