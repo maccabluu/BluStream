@@ -47,8 +47,9 @@ jobs:
               'V20Screen.SHOWS to "Shows",\n                V20Screen.SEARCH to "Search",',
               'V20Screen.SHOWS to "Shows",\n                V20Screen.GENRES to "Genres",\n                V20Screen.SEARCH to "Search",'
           )
-          s = s.replace('Text("BLUSTREAM 2.5"', 'Text("BLUSTREAM 3.2"')
-          s = s.replace('Text("BLUSTREAM 3.1"', 'Text("BLUSTREAM 3.2"')
+          s = s.replace('Text("BLUSTREAM 2.5"', 'Text("BLUSTREAM 3.4"')
+          s = s.replace('Text("BLUSTREAM 3.1"', 'Text("BLUSTREAM 3.4"')
+          s = s.replace('Text("BLUSTREAM 3.2"', 'Text("BLUSTREAM 3.4"')
           p.write_text(s)
           PY
 
@@ -84,15 +85,15 @@ jobs:
             --ks-key-alias blustream \
             --ks-pass pass:blustreamalpha \
             --key-pass pass:blustreamalpha \
-            --out release/BluStream-3.2-alpha.apk \
+            --out release/BluStream-3.4-alpha.apk \
             app/build/outputs/apk/debug/app-debug.apk
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose release/BluStream-3.2-alpha.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose release/BluStream-3.4-alpha.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BluStream-3.2-APK
-          path: release/BluStream-3.2-alpha.apk
+          name: BluStream-3.4-APK
+          path: release/BluStream-3.4-alpha.apk
           if-no-files-found: error
 
       - name: Publish or update GitHub pre-release
@@ -100,15 +101,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          TAG="v3.2"
+          TAG="v3.4"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$TAG" release/BluStream-3.2-alpha.apk --clobber --repo "$GITHUB_REPOSITORY"
-            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "BluStream 3.2 Alpha" --notes-file CHANGELOG.md --prerelease
+            gh release upload "$TAG" release/BluStream-3.4-alpha.apk --clobber --repo "$GITHUB_REPOSITORY"
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "BluStream 3.4 Alpha" --notes-file CHANGELOG.md --prerelease
           else
-            gh release create "$TAG" release/BluStream-3.2-alpha.apk \
+            gh release create "$TAG" release/BluStream-3.4-alpha.apk \
               --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "BluStream 3.2 Alpha" \
+              --title "BluStream 3.4 Alpha" \
               --notes-file CHANGELOG.md \
               --prerelease
           fi
